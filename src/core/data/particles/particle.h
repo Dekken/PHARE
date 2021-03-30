@@ -3,6 +3,9 @@
 
 #include <array>
 #include <random>
+#include <iomanip>
+#include <iostream>
+#include <algorithm>
 #include <type_traits>
 
 #include "core/utilities/point/point.h"
@@ -16,7 +19,7 @@ template<typename T = float>
 struct ParticleDeltaDistribution
 {
     template<typename Generator>
-    float operator()(Generator& generator)
+    T operator()(Generator& generator)
     {
         return dist(generator);
     }

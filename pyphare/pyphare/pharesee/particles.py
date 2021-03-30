@@ -144,27 +144,25 @@ class Particles:
         return self.select(box)
 
 
-    def erase(self, idx_or_list):
-        idx_list = [idx_or_list] if is_scalar(idx_or_list) else idx_or_list
-        self.iCells  = np.delete(self.iCells, idx_list, axis=0)
-        self.deltas  = np.delete(self.deltas, idx_list, axis=0)
-        self.v       = np.delete(self.v, idx_list, axis=0)
-        self.weights = np.delete(self.weights, idx_list, axis=0)
-        self.charges = np.delete(self.charges, idx_list, axis=0)
-        self.dl      = np.delete(self.dl, idx_list, axis=0)
+    def erase(self, idx):
+        self.iCells  = np.delete(self.iCells,idx, axis=0)
+        self.deltas  = np.delete(self.deltas,idx, axis=0)
+        self.v       = np.delete(self.v,idx, axis=0)
+        self.weights = np.delete(self.weights,idx, axis=0)
+        self.charges = np.delete(self.charges,idx, axis=0)
+        self.dl      = np.delete(self.dl,idx, axis=0)
 
 
-    def pop(self, idx_or_list):
-        idx_list = [idx_or_list] if is_scalar(idx_or_list) else idx_or_list
+    def pop(self, idx):
         particles = Particles(
-            icells  = self.iCells[idx_list].copy(),
-            deltas  = self.deltas[idx_list].copy(),
-            v       = self.v[idx_list].copy(),
-            weights = self.weights[idx_list].copy(),
-            charges = self.charges[idx_list].copy(),
-            dl      = self.dl[idx_list].copy(),
+            icells  = self.iCells[idx].copy(),
+            deltas  = self.deltas[idx].copy(),
+            v       = self.v[idx].copy(),
+            weights = self.weights[idx].copy(),
+            charges = self.charges[idx].copy(),
+            dl      = self.dl[idx].copy(),
         )
-        self.erase(idx_list)
+        self.erase(idx)
         return particles
 
 

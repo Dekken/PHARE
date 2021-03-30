@@ -4,11 +4,13 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
-
+#include <algorithm>
+#include <iterator>
+#include <stdexcept>
 #include "core/numerics/pusher/pusher.h"
 #include "core/utilities/range/range.h"
 #include "core/logger.h"
+#include "core/data/particles/particle.h"
 
 namespace PHARE
 {
@@ -24,6 +26,7 @@ namespace core
                              GridLayout>;
         using ParticleSelector = typename Super::ParticleSelector;
         using ParticleRange    = Range<ParticleIterator>;
+
 
         /** see Pusher::move() documentation*/
         ParticleIterator move(ParticleRange const& rangeIn, ParticleRange& rangeOut,
@@ -121,10 +124,10 @@ namespace core
             // push the particle
             for (std::size_t iDim = 0; iDim < dim; ++iDim)
             {
-                float delta
-                    = partIn.delta[iDim] + static_cast<float>(halfDtOverDl_[iDim] * partIn.v[iDim]);
+                double delta = partIn.delta[iDim]
+                               + static_cast<double>(halfDtOverDl_[iDim] * partIn.v[iDim]);
 
-                float iCell = std::floor(delta);
+                double iCell = std::floor(delta);
                 if (std::abs(delta) > 2)
                 {
                     throw std::runtime_error("Error, particle moves more than 1 cell, delta >2");
@@ -146,9 +149,17 @@ namespace core
                        ParticleSelector const& particleIsNotLeaving, PushStep step)
         {
             auto currentOut = rangeOut.begin();
-
             for (auto& currentIn : rangeIn)
             {
+                // in the first push, this is the first time
+                // we push to rangeOut, which contains crap
+                // the push will only touch the particle position
+                // but the next step being the acceleration of
+                // rangeOut, we need to copy rangeIn weights, charge
+                // and velocity. This is done here although
+                // not strictly speaking this function's business
+                // to take advantage that we're already looping
+                // over rangeIn particles.
                 if (step == PushStep::PrePush)
                 {
                     currentOut->charge = currentIn.charge;

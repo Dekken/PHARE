@@ -1,4 +1,5 @@
 
+
 from pyphare.cpp import cpp_lib
 cpp = cpp_lib()
 
@@ -63,10 +64,10 @@ class AdvanceTest(unittest.TestCase):
             L = global_vars.sim.simulation_domain()[0]
             v1=-1
             v2=1.
-            return v1 + (v2-v1)*(S(x,L*0.25,1) -S(x, L*0.75, 1))
+            return 0.
 
         def bz(x):
-            return 0.5
+            return 0.0
 
         def b2(x):
             return bx(x)**2 + by(x)**2 + bz(x)**2
@@ -409,20 +410,10 @@ class AdvanceTest(unittest.TestCase):
                         cell = np.where(tmp > 0)[0]
                         duplicate_found = len(cell)
                         if duplicate_found:
-                            cell = cell[0]
-
-                            assert dim == 1, "not sure this works in 2d"
-                            def pop_indicis(parts, idx):
-                                return parts.pop(np.unique(np.concatenate(
-                                  np.asarray([np.where(parts.deltas == part_delta)[0] for part_delta in [
-                                      parts.deltas[idx][cell - 1], parts.deltas[idx][cell], parts.deltas[idx][cell + 1]
-                                ]])).ravel()))
-
-                            particles_any_assert(pop_indicis(part1, idx1), pop_indicis(part2, idx2))
-
-                            # redo after removing indexes
-                            idx1 = np.argsort(part1.iCells + part1.deltas)
-                            idx2 = np.argsort(part2.iCells + part2.deltas)
+                            print(cell)
+                            print(part1.deltas[idx1][cell])
+                            print(part2.deltas[idx2][cell])
+                            print("duplicate particles found, test will fail")
 
                         np.testing.assert_array_equal(part1.iCells[idx1]+offsets[0], part2.iCells[idx2]+offsets[1])
                         np.testing.assert_allclose(part1.deltas[idx1], part2.deltas[idx2], atol=1e-12)
