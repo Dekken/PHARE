@@ -252,25 +252,9 @@ class InitializationTest(unittest.TestCase):
                 if dim == 3:
                     raise ValueError("Unsupported dimension")
 
-    def test_B_is_as_provided_by_user(self):
-        dimensions = [1, 2]
-        interp_orders = [1, 2, 3]
-        for dim in dimensions:
-            for interp_order in interp_orders:
-                self._test_B_is_as_provided_by_user(dim, interp_order)
 
 
-
-    # ADD 2d
-    @data((1, {"L0": {"B0": [(10, ), (20, )]}}),
-          (2, {"L0": {"B0": [(10, ), (20, )]}}),
-          (3, {"L0": {"B0": [(10, ), (20, )]}}),
-          (1, {"L0": {"B0": Box1D( 2, 12), "B1": Box1D(13, 25)}}),
-          (2, {"L0": {"B0": Box1D( 2, 12), "B1": Box1D(13, 25)}}),
-          (3, {"L0": {"B0": Box1D( 2, 12), "B1": Box1D(13, 25)}}))
-    @unpack
-    def test_overlaped_fields_are_equal(self, interp_order, refinement_boxes):
-        print("test_overlaped_fields_are_equal")
+    def _test_overlaped_fields_are_equal(self, interp_order, refinement_boxes):
         hier = self.getHierarchy(interp_order, refinement_boxes, "b")
 
         overlaps = hierarchy_overlaps(hier)
@@ -402,14 +386,6 @@ class InitializationTest(unittest.TestCase):
                     for vexp, vact in zip((vxexp, vyexp, vzexp), (vxact, vyact, vzact)):
                         self.assertTrue(np.std(vexp-vact) < 1e-2)
 
-    def test_bulkvel_is_as_provided_by_user(self):
-        dimensions = [1, 2]
-        interp_orders = [1, 2, 3]
-        for dim in dimensions:
-            for interp_order in interp_orders:
-                self._test_bulkvel_is_as_provided_by_user(dim, interp_order)
-
-
 
 
     def _test_density_is_as_provided_by_user(self, dim, interp_order):
@@ -487,14 +463,6 @@ class InitializationTest(unittest.TestCase):
                         print("sigma(user density - {} density) = {}".format(name, dev))
                         self.assertTrue(dev < 1e-2, '{} has dev = {}'.format(name, dev))  # empirical value obtained from test prints
 
-    def test_density_is_as_provided_by_user(self):
-        dimensions = [1, 2]
-        interp_orders = [1, 2, 3]
-        for dim in dimensions:
-            for interp_order in interp_orders:
-                self._test_density_is_as_provided_by_user(dim, interp_order)
-
-
 
 
     # making this +1d might not be so simples
@@ -562,57 +530,45 @@ class InitializationTest(unittest.TestCase):
         plt.close("all")
         self.assertGreater(3e-2, noiseMinusTheory[1:].mean())
 
-    def test_density_decreases_as_1overSqrtN(self):
-        import matplotlib
-        matplotlib.use("Agg")  # for systems without GUI
-        dimensions = [1] # update for 2
-        interp_orders = [1, 2, 3]
-        for dim in dimensions:
-            for interp_order in interp_orders:
-              self._test_density_decreases_as_1overSqrtN(dim, interp_order)
 
+    def test_nbr_particles_per_cell_is_as_provided(self, dim, interp, default_ppc=100):
 
-    def test_nbr_particles_per_cell_is_as_provided(self):
+        datahier = self.getHierarchy(interp_order, {"L0": {"B0": nDBox(dim, 10, 20)}}, "particles", dims=dim,
+                      diag_outputs="phare_outputs/ppc/{}/{}".format(dim, interp_order))
 
-        default_ppc = 100
-        for dim in [1, 2]:
-            for interp_order in [1, 2, 3]:
-                datahier = self.getHierarchy(interp_order, {"L0": {"B0": nDBox(dim, 10, 20)}}, "particles", dims=dim,
-                              diag_outputs="phare_outputs/ppc/{}/{}".format(dim, interp_order))
+        print("test_nbr_particles_per_cell_is_as_provided, interp_order = {}".format(interp_order))
+        L0 = datahier.level(0)
+        for patch in L0.patches:
+            pd = patch.patch_datas["protons_particles"]
+            icells = pd.dataset.iCells
+            mincell = icells.min()
+            # bincount only works for non-negative values
+            # but icells could be -1 or -2 for interp order 1 or (2,3)
+            # so we artificially add the min (-1 or -2) and count the
+            # number of occurence of cell indexes
+            # this should be a list of only nbr_part_per_cell
+            if dim == 1:
+                counts = np.bincount(icells-mincell)
+                self.assertTrue(np.all(counts == default_ppc))
+            elif dim == 2:
+                i =  icells[:, 0]
+                j =  icells[:, 1]
 
-                print("test_nbr_particles_per_cell_is_as_provided, interp_order = {}".format(interp_order))
-                L0 = datahier.level(0)
-                for patch in L0.patches:
-                    pd = patch.patch_datas["protons_particles"]
-                    icells = pd.dataset.iCells
-                    mincell = icells.min()
-                    # bincount only works for non-negative values
-                    # but icells could be -1 or -2 for interp order 1 or (2,3)
-                    # so we artificially add the min (-1 or -2) and count the
-                    # number of occurence of cell indexes
-                    # this should be a list of only nbr_part_per_cell
-                    if dim == 1:
-                        counts = np.bincount(icells-mincell)
-                        self.assertTrue(np.all(counts == default_ppc))
-                    elif dim == 2:
-                        i =  icells[:, 0]
-                        j =  icells[:, 1]
+                gb_shape = pd.ghost_box.shape
+                self.assertTrue(np.all(np.bincount(i - i.min()) == (gb_shape[1] * 100)))
+                self.assertTrue(np.all(np.bincount(j - j.min()) == (gb_shape[0] * 100)))
+            elif dim == 3:
+                # This if block is untested but probably works
+                i =  icells[:, 0]
+                j =  icells[:, 1]
+                k =  icells[:, 2]
 
-                        gb_shape = pd.ghost_box.shape
-                        self.assertTrue(np.all(np.bincount(i - i.min()) == (gb_shape[1] * 100)))
-                        self.assertTrue(np.all(np.bincount(j - j.min()) == (gb_shape[0] * 100)))
-                    elif dim == 3:
-                        # This if block is untested but probably works
-                        i =  icells[:, 0]
-                        j =  icells[:, 1]
-                        k =  icells[:, 2]
-
-                        gb_shape = pd.ghost_box.shape
-                        self.assertTrue(np.all(np.bincount(i - i.min()) == (gb_shape[2] * 100)))
-                        self.assertTrue(np.all(np.bincount(j - j.min()) == (gb_shape[1] * 100)))
-                        self.assertTrue(np.all(np.bincount(k - k.min()) == (gb_shape[0] * 100)))
-                    else:
-                        raise ValueError("Unsupported dimension")
+                gb_shape = pd.ghost_box.shape
+                self.assertTrue(np.all(np.bincount(i - i.min()) == (gb_shape[2] * 100)))
+                self.assertTrue(np.all(np.bincount(j - j.min()) == (gb_shape[1] * 100)))
+                self.assertTrue(np.all(np.bincount(k - k.min()) == (gb_shape[0] * 100)))
+            else:
+                raise ValueError("Unsupported dimension")
 
 
 
