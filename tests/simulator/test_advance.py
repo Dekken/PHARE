@@ -136,7 +136,7 @@ class AdvanceTest(unittest.TestCase):
                                     write_timestamps=timestamps,
                                     population_name=pop)
 
-        Simulator(global_vars.sim).initialize().run()
+        # Simulator(global_vars.sim).initialize().run()
 
         eb_hier = None
         if qty in ["e", "eb"]:
@@ -363,7 +363,7 @@ class AdvanceTest(unittest.TestCase):
         datahier = self.getHierarchy(interp_order, refinement_boxes, "particles", diag_outputs=diag_outputs,
                                       time_step=time_step, time_step_nbr=time_step_nbr)
 
-        for time_step_idx in range(time_step_nbr + 1):
+        for time_step_idx in range(2, 3):
             coarsest_time =  time_step_idx * time_step
 
             overlaps = hierarchy_overlaps(datahier, coarsest_time)
@@ -393,8 +393,8 @@ class AdvanceTest(unittest.TestCase):
                         part2 = copy(pd2.dataset.select(boxm.shift(box, -offsets[1])))
 
 
-                        idx1 = np.argsort(part1.iCells + part1.deltas, kind="mergesort")
-                        idx2 = np.argsort(part2.iCells + part2.deltas, kind="mergesort")
+                        idx1 = np.argsort(part1.iCells + part1.deltas) #, kind="mergesort")
+                        idx2 = np.argsort(part2.iCells + part2.deltas) #, kind="mergesort")
 
 
                         # if there is an overlap, there should be particles
@@ -402,16 +402,45 @@ class AdvanceTest(unittest.TestCase):
                         assert(len(idx1) >0)
                         assert(len(idx2) >0)
 
-                        print("respectively {} and {} in overlaped patchdatas".format(len(idx1), len(idx2)))
+                        print("{} respectively {} and {} in overlaped patchdatas".format(ilvl, len(idx1), len(idx2)))
 
                         # particle iCells are in their patch AMR space
                         # so we need to shift them by +offset to move them to the box space
-                        np.testing.assert_array_equal(part1.iCells[idx1]+offsets[0], part2.iCells[idx2]+offsets[1])
 
-                        self.assertTrue(np.allclose(part1.deltas[idx1], part2.deltas[idx2], atol=1e-12))
-                        self.assertTrue(np.allclose(part1.v[idx1,0], part2.v[idx2,0], atol=1e-12))
-                        self.assertTrue(np.allclose(part1.v[idx1,1], part2.v[idx2,1], atol=1e-12))
-                        self.assertTrue(np.allclose(part1.v[idx1,2], part2.v[idx2,2], atol=1e-12))
+                        tmp = (part1.v[idx1,0] - part2.v[idx2,0])
+                        print(tmp[tmp > 0])
+
+                        cell = np.where(tmp > 0)[0]
+
+                        if len(cell):
+                            cell = cell[0]
+
+                            print("cell ", cell, time_step_idx)
+                            print("d1.dtype", part1.deltas.dtype)
+                            print("d2.dtype", part2.deltas.dtype)
+
+                            # t = "{:.10f}".format(time)
+
+                            print("d1", part1.deltas[idx1][cell - 1], part1.deltas[idx1][cell], part1.deltas[idx1][cell + 1])
+                            print("d1", part1.iCells[idx1][cell - 1], part1.iCells[idx1][cell], part1.iCells[idx1][cell + 1])
+
+                            print("d2", part2.deltas[idx2][cell - 1], part2.deltas[idx2][cell], part2.deltas[idx2][cell + 1])
+                            print("d1", part2.iCells[idx2][cell - 1], part2.iCells[idx2][cell], part2.iCells[idx2][cell + 1])
+
+                            print("v1", part1.v[idx1,0][cell - 1], part1.v[idx1,0][cell], part1.v[idx1,0][cell + 1])
+                            print("v2", part2.v[idx2,0][cell - 1], part2.v[idx2,0][cell], part2.v[idx2,0][cell + 1])
+
+                            self.assertTrue(np.allclose(part1.v[idx1,0], part2.v[idx2,0], atol=1e-12))
+                            # np.testing.assert_allclose(part1.v[idx1,1], part2.v[idx2,1], atol=1e-12)
+                            # np.testing.assert_allclose(part1.v[idx1,2], part2.v[idx2,2], atol=1e-12)
+
+
+                            np.testing.assert_array_equal(part1.iCells[idx1]+offsets[0], part2.iCells[idx2]+offsets[1])
+
+                            self.assertTrue(np.allclose(part1.deltas[idx1], part2.deltas[idx2], atol=1e-12))
+                            self.assertTrue(np.allclose(part1.v[idx1,0], part2.v[idx2,0], atol=1e-12))
+                            self.assertTrue(np.allclose(part1.v[idx1,1], part2.v[idx2,1], atol=1e-12))
+                            self.assertTrue(np.allclose(part1.v[idx1,2], part2.v[idx2,2], atol=1e-12))
 
     @data(
       {"L0": [Box1D(10, 20)]},
