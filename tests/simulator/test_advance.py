@@ -392,15 +392,10 @@ class AdvanceTest(unittest.TestCase):
                         part1 = copy(pd1.dataset.select(boxm.shift(box, -offsets[0])))
                         part2 = copy(pd2.dataset.select(boxm.shift(box, -offsets[1])))
 
-                        def contains_duplicates(X):
-                            return len(np.unique(X)) != len(X)
 
-                        if contains_duplicates(part1.deltas) and contains_duplicates(part2.deltas):
-                            # https://github.com/PHAREHUB/PHARE/issues/513
-                            continue
+                        idx1 = np.argsort(part1.iCells + part1.deltas, kind="mergesort")
+                        idx2 = np.argsort(part2.iCells + part2.deltas, kind="mergesort")
 
-                        idx1 = np.argsort(part1.iCells + part1.deltas)
-                        idx2 = np.argsort(part2.iCells + part2.deltas)
 
                         # if there is an overlap, there should be particles
                         # in these cells
