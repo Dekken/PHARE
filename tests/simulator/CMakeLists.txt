@@ -20,7 +20,12 @@ if(HighFive)
   add_python3_test(initialization  test_initialization.py  ${CMAKE_CURRENT_BINARY_DIR})
   add_python3_test(advancement     test_advance.py         ${CMAKE_CURRENT_BINARY_DIR})
 
+
   phare_python3_exec(11, test_diagnostic_timestamps test_diagnostic_timestamps.py ${CMAKE_CURRENT_BINARY_DIR})
+
+
+  add_python3_test(pusher_kirov    test_kirov.py           ${CMAKE_CURRENT_BINARY_DIR})
+
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.py ${CMAKE_CURRENT_BINARY_DIR}/config.py @ONLY)
