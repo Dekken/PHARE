@@ -28,8 +28,7 @@ namespace core
         using ParticleSelector = typename Super::ParticleSelector;
         using ParticleRange    = Range<ParticleIterator>;
 
-    private:
-    public:
+
         // This move function should be considered when being used so that all particles are pushed
         // twice - see: https://github.com/PHAREHUB/PHARE/issues/571
         /** see Pusher::move() documentation*/
