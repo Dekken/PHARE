@@ -31,6 +31,7 @@ public:
     using Super::checkCreateFileFor_;
     using Attributes = typename Super::Attributes;
     using GridLayout = typename H5Writer::GridLayout;
+    using FloatType  = typename H5Writer::FloatType;
 
     FluidDiagnosticWriter(H5Writer& h5Writer)
         : Super{h5Writer}
@@ -145,15 +146,15 @@ void FluidDiagnosticWriter<H5Writer>::initDataSets(
 
     auto initDS = [&](auto& path, auto& attr, std::string key, auto null) {
         auto dsPath = path + key;
-        h5Writer.template createDataSet<float>(file, dsPath,
-                                               null ? 0 : attr[key].template to<std::size_t>());
+        h5Writer.template createDataSet<FloatType>(file, dsPath,
+                                                   null ? 0 : attr[key].template to<std::size_t>());
         writeGhosts(dsPath, attr, key, null);
     };
     auto initVF = [&](auto& path, auto& attr, std::string key, auto null) {
         for (auto& [id, type] : core::Components::componentMap)
         {
             auto vFPath = path + key + "_" + id;
-            h5Writer.template createDataSet<float>(
+            h5Writer.template createDataSet<FloatType>(
                 file, vFPath, null ? 0 : attr[key][id].template to<std::size_t>());
             writeGhosts(vFPath, attr[key], id, null);
         }
@@ -224,9 +225,21 @@ void FluidDiagnosticWriter<H5Writer>::writeAttributes(
         patchAttributes,
     std::size_t maxLevel)
 {
-    auto& h5file = fileData_.at(diagnostic.quantity)->file();
+    auto& h5Writer = this->h5Writer_;
+    auto& h5file   = fileData_.at(diagnostic.quantity)->file();
 
-    writeIonPopAttributes_(h5file);
+    auto checkWrite = [&](auto& tree, std::string qty, auto const& pop) {
+        if (diagnostic.quantity == tree + qty)
+            this->writeIonPopAttributes_(h5file, pop);
+    };
+
+    for (auto& pop : h5Writer.modelView().getIons())
+    {
+        std::string tree = "/ions/pop/" + pop.name() + "/";
+        checkWrite(tree, "density", pop);
+        checkWrite(tree, "flux", pop);
+    }
+
     writeAttributes_(diagnostic, h5file, fileAttributes, patchAttributes, maxLevel);
 }
 
