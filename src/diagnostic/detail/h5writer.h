@@ -18,6 +18,7 @@
 #include "core/utilities/meta/meta_utilities.h"
 
 
+
 #if !defined(PHARE_DIAG_DOUBLES)
 #error // PHARE_DIAG_DOUBLES not defined
 #endif

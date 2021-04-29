@@ -759,7 +759,7 @@ namespace core
          */
 
         template<typename T>
-        auto AMRToLocal(Point<T, dimension> AMRPoint) const
+        auto AMRToLocal(std::array<T, dimension> const& AMRPoint) const
         {
             static_assert(std::is_integral_v<T>, "Error, must be MeshIndex (integral Point)");
             Point<T, dimension> localPoint;
@@ -773,6 +773,12 @@ namespace core
                 localPoint[i] = AMRPoint[i] - (AMRBox_.lower[i] - localStart);
             }
             return localPoint;
+        }
+
+        template<typename T>
+        auto AMRToLocal(Point<T, dimension> AMRPoint) const
+        {
+            return AMRToLocal(AMRPoint());
         }
 
 
