@@ -22,7 +22,7 @@ PHARE::core::Particle<dim> particle(int icell = 5)
             /*.weight = */ 0,
             /*.charge = */ 1,
             /*.iCell  = */ PHARE::core::ConstArray<int, dim>(icell),
-            /*.delta  = */ PHARE::core::ConstArray<float, dim>(.5),
+            /*.delta  = */ PHARE::core::ConstArray<double, dim>(.5),
             /*.v      = */ {{0, 10., 0}}};
 }
 

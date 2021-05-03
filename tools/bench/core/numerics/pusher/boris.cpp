@@ -1,6 +1,5 @@
 
 #include "benchmark/benchmark.h"
-
 #include "pusher_bench.h"
 
 using namespace PHARE::core::bench;
