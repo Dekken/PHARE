@@ -533,7 +533,7 @@ namespace core
 
             for (auto iDim = 0u; iDim < dimension; ++iDim)
             {
-                auto iCell           = layout.AMRToLocal(Point{part.iCell});
+                auto iCell           = layout.AMRToLocal(Point<int, dim>{part.iCell});
                 double normalizedPos = iCell[iDim] + part.delta[iDim] + dualOffset(interpOrder);
 
                 startIndex_[centering2int(QtyCentering::dual)][iDim]
@@ -546,7 +546,7 @@ namespace core
 
             for (auto iDim = 0u; iDim < dimension; ++iDim)
             {
-                auto iCell           = layout.AMRToLocal(Point{part.iCell});
+                auto iCell           = layout.AMRToLocal(Point<int, dim>{part.iCell});
                 double normalizedPos = iCell[iDim] + part.delta[iDim];
 
                 startIndex_[centering2int(QtyCentering::primal)][iDim]
