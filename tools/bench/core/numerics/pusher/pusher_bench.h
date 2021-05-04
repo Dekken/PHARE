@@ -2,7 +2,6 @@
 #define PHARE_CORE_PUSHER_BENCH_H
 
 #include "phare_core.h"
-#include "core/numerics/pusher/boris.h"
 #include "core/numerics/ion_updater/ion_updater.h"
 
 namespace PHARE::core::bench

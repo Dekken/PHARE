@@ -176,7 +176,8 @@ private:
 
         auto currentOut = outputParticles.begin();
 
-#pragma acc parallel for (auto const& currentIn : inputParticles)
+#pragma acc parallel
+        for (auto const& currentIn : inputParticles)
         {
             double coef1 = currentIn.charge * dto2m;
 
