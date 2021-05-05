@@ -1,5 +1,5 @@
-#ifndef PHARE_CORE_PUSHER_KIROV_H
-#define PHARE_CORE_PUSHER_KIROV_H
+#ifndef PHARE_CORE_PUSHER_PAVLOV_H
+#define PHARE_CORE_PUSHER_PAVLOV_H
 
 
 #include "core/ThreadPool.h"
@@ -18,7 +18,7 @@ namespace PHARE::core
 {
 template<std::size_t dim, typename ParticleIterator, typename Electromag, typename Interpolator,
          typename BoundaryCondition, typename GridLayout, typename ThreadPool_t = EXT::ThreadPool>
-class KirovPusher
+class PavlovPusher
     : public Pusher<dim, ParticleIterator, Electromag, Interpolator, BoundaryCondition, GridLayout>
 {
 public:
@@ -27,7 +27,7 @@ public:
     using ParticleSelector = typename Super::ParticleSelector;
     using ParticleRange    = Range<ParticleIterator>;
 
-    KirovPusher(std::size_t threads = 1)
+    PavlovPusher(std::size_t threads = 1)
         : pool_{threads - 1}
     {
         assert(threads > 0);
@@ -80,7 +80,7 @@ public:
                           ParticleSelector const& particleIsNotLeaving,
                           GridLayout const& layout) override
     {
-        PHARE_LOG_SCOPE("Kirov::move_no_bc");
+        PHARE_LOG_SCOPE("Pavlov::move_no_bc");
 
         // push the particles of half a step
         // rangeIn : t=n, rangeOut : t=n+1/2
@@ -131,29 +131,17 @@ public:
                           Interpolator& interpolator, ParticleSelector const& particleIsNotLeaving,
                           GridLayout const& layout) override
     {
-        PHARE_LOG_SCOPE("Kirov::move_in_place_no_bc");
+        PHARE_LOG_SCOPE("Pavlov::move_in_place_no_bc");
 
         accelerate_setup(mass);
 
         std::vector<bool> particlesAreNotLeaving(range.size(), false);
 
-        auto _move = [&](std::size_t const from, std::size_t const to) {
-            for (std::size_t i = from; i < to; ++i)
-                particlesAreNotLeaving[i]
-                    = move_in_place(range[i], emFields, interpolator, particleIsNotLeaving, layout);
-        };
-
-        std::size_t perThread = range.size() / (pool_.size() + 1);
-        for (std::size_t i = 0; i < pool_.size(); ++i)
-            pool_.enqueue([&, ix = i]() {
-                auto from = ix * perThread;
-                auto to   = from + perThread;
-                _move(from, to);
-            });
-
-        _move(pool_.size() * perThread, range.size()); // should start at 0 for cache?
-
-        pool_.sync();
+#pragma acc kernels
+#pragma acc loop
+        for (std::size_t i = 0; i < range.size(); ++i)
+            particlesAreNotLeaving[i]
+                = move_in_place(range[i], emFields, interpolator, particleIsNotLeaving, layout);
 
         auto firstLeaving
             = std::partition(std::begin(range), std::end(range), [&](auto const& part) {

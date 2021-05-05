@@ -17,7 +17,6 @@ namespace core
         using pointer           = typename Iterator::pointer;
 
 
-
         template<class Container>
         explicit Range(Container const& c)
             : first_{std::begin(c)}

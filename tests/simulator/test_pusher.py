@@ -1,5 +1,6 @@
 
-from pybindlibs import cpp
+from pyphare.cpp import cpp_lib
+cpp = cpp_lib()
 
 from pyphare.simulator.simulator import Simulator, startMPI
 from pyphare.pharesee.hierarchy import hierarchy_from, merge_particles
@@ -19,6 +20,8 @@ from ddt import ddt, data, unpack
 
 # AdvanceTest.test_field_level_ghosts_via_subcycles_and_coarser_interpolation_1
 
+active_pusher = "pavlov"
+
 @ddt
 class AdvanceTest(unittest.TestCase):
 
@@ -32,7 +35,7 @@ class AdvanceTest(unittest.TestCase):
                      dl=0.1, extra_diag_options={}, time_step_nbr=1, timestamps=None):
 
         # not to conflict with test_advance.py
-        diag_outputs = f"kirov_{diag_outputs}"
+        diag_outputs = f"phare_outputs/{active_pusher}/{diag_outputs}"
 
         from pyphare.pharein import global_vars
         global_vars.sim = None
@@ -49,7 +52,7 @@ class AdvanceTest(unittest.TestCase):
             dl=dl,
             interp_order=interp_order,
             refinement_boxes=refinement_boxes,
-            particle_pusher="kirov",
+            particle_pusher=active_pusher,
             diag_options={"format": "phareh5",
                           "options": extra_diag_options}
         )
@@ -64,10 +67,7 @@ class AdvanceTest(unittest.TestCase):
             return 1.
 
         def by(x):
-            L = global_vars.sim.simulation_domain()[0]
-            v1=-1
-            v2=1.
-            return v1 + (v2-v1)*(S(x,L*0.25,1) -S(x, L*0.75, 1))
+            return 0
 
         def bz(x):
             return 0.5
