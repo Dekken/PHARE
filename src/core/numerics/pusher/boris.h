@@ -104,6 +104,13 @@ namespace core
             return rangeOut.end();
         }
 
+        ParticleIterator move(ParticleRange& range, Electromag const& emFields, double mass,
+                              Interpolator& interpolator,
+                              ParticleSelector const& particleIsNotLeaving,
+                              GridLayout const& layout) override
+        {
+            return move(range, range, emFields, mass, interpolator, particleIsNotLeaving, layout);
+        }
 
         /** see Pusher::move() documentation*/
         virtual void setMeshAndTimeStep(std::array<double, dim> ms, double ts) override

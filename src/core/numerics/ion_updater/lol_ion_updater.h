@@ -39,8 +39,8 @@ public:
     using ParticleArray     = typename Ions::particle_array_type;
     using PartIterator      = typename ParticleArray::iterator;
     using BoundaryCondition = PHARE::core::BoundaryCondition<dimension, interp_order>;
-    using Pusher = PHARE::core::KirovPusher<dimension, PartIterator, Electromag, Interpolator,
-                                            BoundaryCondition, GridLayout>;
+    using Pusher            = PHARE::core::Pusher<dimension, PartIterator, Electromag, Interpolator,
+                                       BoundaryCondition, GridLayout>;
 
     static std::size_t get_threads(PHARE::initializer::PHAREDict const& dict)
     {
@@ -51,9 +51,8 @@ public:
 
 public:
     LOL_IonUpdater(PHARE::initializer::PHAREDict const& dict)
-        : pusher_threads_{get_threads(dict)}
-        , pusher_{std::make_unique<Pusher>(pusher_threads_)}
-    //, pusher_{makePusher(dict["pusher"]["name"].template to<std::string>())}
+        : pusher_threads_{get_threads(dict)} // , pusher_{std::make_unique<Pusher>(pusher_threads_)}
+        , pusher_{makePusher(dict["pusher"]["name"].template to<std::string>())}
     {
         assert(pusher_threads_ > 0);
     }

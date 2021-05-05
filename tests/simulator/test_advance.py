@@ -59,9 +59,6 @@ class AdvanceTest(unittest.TestCase):
             return 1.
 
         def by(x):
-            L = global_vars.sim.simulation_domain()[0]
-            v1=-1
-            v2=1.
             return 0.
 
         def bz(x):

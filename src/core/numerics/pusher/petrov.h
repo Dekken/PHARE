@@ -95,6 +95,13 @@ public:
         return rangeOut.end();
     }
 
+    ParticleIterator move(ParticleRange& range, Electromag const& emFields, double mass,
+                          Interpolator& interpolator, ParticleSelector const& particleIsNotLeaving,
+                          GridLayout const& layout) override
+    {
+        return move(range, range, emFields, mass, interpolator, particleIsNotLeaving, layout);
+    }
+
 
     /** see Pusher::move() documentation*/
     virtual void setMeshAndTimeStep(std::array<double, dim> ms, double ts) override
@@ -170,15 +177,21 @@ private:
     /** Accelerate the particles in rangeIn and put the new velocity in rangeOut
      */
     template<typename ParticleRangeIn, typename ParticleRangeOut>
-    void accelerate_(ParticleRangeIn inputParticles, ParticleRangeOut outputParticles, double mass)
+    void accelerate_(ParticleRangeIn const& inputParticles, ParticleRangeOut& outputParticles,
+                     double mass)
     {
+        assert(inputParticles.size() == outputParticles.size());
+
         double dto2m = 0.5 * dt_ / mass;
 
-        auto currentOut = outputParticles.begin();
+        auto* /*__restrict*/ currentInP = &(*inputParticles.begin());
+        auto* /*__restrict*/ currentOut = &(*outputParticles.begin());
 
-#pragma acc parallel
-        for (auto const& currentIn : inputParticles)
+#pragma acc parallel loop
+        for (std::size_t i = 0; i < inputParticles.size(); i++)
         {
+            auto& currentIn = *currentInP;
+
             double coef1 = currentIn.charge * dto2m;
 
             // We now apply the 3 steps of the BORIS PUSHER
@@ -233,6 +246,7 @@ private:
             currentOut->v[1] = vely1;
             currentOut->v[2] = velz1;
 
+            ++currentInP;
             ++currentOut;
         }
     }

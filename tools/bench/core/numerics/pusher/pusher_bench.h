@@ -25,6 +25,19 @@ PHARE::core::Particle<dim> particle(int icell = 5)
             /*.v      = */ {{0, 10., 0}}};
 }
 
+template<typename ParticleArray>
+void disperse(ParticleArray& particles, std::size_t lower, std::size_t upper)
+{
+    std::random_device rd;
+    std::seed_seq seed_seq{rd(), rd(), rd(), rd(), rd(), rd(), rd()};
+    std::mt19937 gen{seed_seq};
+    std::uniform_int_distribution<> distrib(lower, upper);
+
+    for (auto& particle : particles)
+        for (std::size_t i = 0; i < ParticleArray::dimension; i++)
+            particle.iCell[i] = distrib(gen);
+}
+
 template<typename GridLayout, typename Quantity, std::size_t dim = GridLayout::dimension>
 Field<dim> field(std::string key, Quantity type, GridLayout const& layout)
 {
