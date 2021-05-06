@@ -20,7 +20,7 @@ from ddt import ddt, data, unpack
 
 # AdvanceTest.test_field_level_ghosts_via_subcycles_and_coarser_interpolation_1
 
-active_pusher = "pavlov"
+active_pusher = "petrov"
 
 @ddt
 class AdvanceTest(unittest.TestCase):
