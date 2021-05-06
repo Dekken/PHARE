@@ -184,13 +184,17 @@ private:
 
         double dto2m = 0.5 * dt_ / mass;
 
-        auto* /*__restrict*/ currentInP = &(*inputParticles.begin());
-        auto* /*__restrict*/ currentOut = &(*outputParticles.begin());
+        auto* /*__restrict*/ currentInP  = &(*inputParticles.begin());
+        auto* /*__restrict*/ currentOutP = &(*outputParticles.begin());
+
+        // PGI cannot parallelize loops where upperbound is a class member
+        std::size_t const nParticles = inputParticles.size();
 
 #pragma acc parallel loop
-        for (std::size_t i = 0; i < inputParticles.size(); i++)
+        for (std::size_t i = 0; i < nParticles; ++i)
         {
-            auto& currentIn = *currentInP;
+            auto const& currentIn = currentInP[i];
+            auto& currentOut      = currentOutP[i];
 
             double coef1 = currentIn.charge * dto2m;
 
@@ -235,23 +239,17 @@ private:
             double const vely2 = (myx * velx1 + myy * vely1 + myz * velz1) * invDet;
             double const velz2 = (mzx * velx1 + mzy * vely1 + mzz * velz1) * invDet;
 
-
             // 2nd half push of the electric field
             velx1 = velx2 + coef1 * currentIn.Ex;
             vely1 = vely2 + coef1 * currentIn.Ey;
             velz1 = velz2 + coef1 * currentIn.Ez;
 
             // Update particle velocity
-            currentOut->v[0] = velx1;
-            currentOut->v[1] = vely1;
-            currentOut->v[2] = velz1;
-
-            ++currentInP;
-            ++currentOut;
+            currentOut.v[0] = velx1;
+            currentOut.v[1] = vely1;
+            currentOut.v[2] = velz1;
         }
     }
-
-
 
 
     std::array<double, dim> halfDtOverDl_;
