@@ -170,4 +170,8 @@ class SimulatorValidation(unittest.TestCase):
         self._do_dim(2, input)
 
 if __name__ == "__main__":
-    unittest.main()
+    try:
+        from concurrencytest import ConcurrentTestSuite, fork_for_tests
+        unittest.TextTestRunner().run(ConcurrentTestSuite(unittest.TestLoader().loadTestsFromTestCase(SimulatorRefineBoxInputs), fork_for_tests(12)))
+    except ImportError as err:
+        unittest.main()
