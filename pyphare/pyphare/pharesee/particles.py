@@ -162,7 +162,7 @@ class Particles:
 
 
     def as_tuples(self):
-        tuples = [
+        return [
             ( *self.iCells[i],
               *self.deltas[i],
               *self.v[i],
@@ -171,9 +171,6 @@ class Particles:
               *self.charges[i]
             ) for i in range(self.size())
         ]
-        print(tuples[0])
-        return tuples
-
 
 
 def all_assert(part1, part2):
@@ -261,8 +258,20 @@ def remove(particles, idx):
                      dl = dl
                     )
 
+<<<<<<< HEAD
 ## 2d particle sorting
 # def _sort(particles):
     # x1 = particles.iCells[:,0] + particles.deltas[:,0]
     # y1 = particles.iCells[:,1] + particles.deltas[:,1]
     # return np.argsort(np.sqrt((x1 ** 2 + y1 ** 2)) / (x1 / y1))
+=======
+# def _sort(particles):
+    # x1 = part1.iCells[:,0] + part1.deltas[:,0] + offsets[0][0]
+    # y1 = part1.iCells[:,1] + part1.deltas[:,1] + offsets[0][1]
+    # x2 = part2.iCells[:,0] + part2.deltas[:,0] + offsets[1][0]
+    # y2 = part2.iCells[:,1] + part2.deltas[:,1] + offsets[1][1]
+    # k1 = np.sqrt((x1 ** 2 + y1 ** 2)) / (x1 / y1)
+    # k2 = np.sqrt((x2 ** 2 + y2 ** 2)) / (x2 / y2)
+    # idx1 = np.argsort(k1)
+    # idx2 = np.argsort(k2)
+>>>>>>> 4e773ae (better, needs C++ diag shaping)
