@@ -18,6 +18,7 @@ def per_interp(dic):
 class AdvanceTest(AdvanceTestBase):
 
     @data(
+      *per_interp({}),
       *per_interp({"L0": [Box1D(10, 19)]}),
       *per_interp({"L0": [Box1D(8, 20)]}),
     )

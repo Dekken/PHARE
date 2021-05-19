@@ -4,7 +4,7 @@ cpp = cpp_lib()
 
 from pyphare.simulator.simulator import Simulator
 from pyphare.pharesee.hierarchy import hierarchy_from, merge_particles
-from pyphare.pharein import MaxwellianFluidModel
+from pyphare.pharein import MaxwellianFluidModel, fn_wrapper
 from pyphare.pharein.diagnostics import ParticleDiagnostics, FluidDiagnostics, ElectromagDiagnostics
 from pyphare.pharein import ElectronModel
 from pyphare.pharein.simulation import Simulation
@@ -257,8 +257,8 @@ class InitializationTest(unittest.TestCase):
                     xbz, ybz = [a.flatten() for a in np.meshgrid(xbz, ybz, indexing="ij")]
 
                     np.testing.assert_allclose(bx, bx_fn(xbx, ybx), atol=1e-16)
-                    np.testing.assert_allclose(by, by_fn(xby, yby), atol=1e-16)
-                    np.testing.assert_allclose(bz, bz_fn(xbz, ybz), atol=1e-16)
+                    np.testing.assert_allclose(by, by_fn(xby, yby).reshape(by.shape), atol=1e-16)
+                    np.testing.assert_allclose(bz, bz_fn(xbz, ybz).reshape(bz.shape), atol=1e-16)
 
                 if dim == 3:
                     raise ValueError("Unsupported dimension")
@@ -512,20 +512,23 @@ class InitializationTest(unittest.TestCase):
         for patch in L0.patches:
             pd = patch.patch_datas["protons_particles"]
             icells = pd.dataset.iCells
-            mincell = icells.min()
+
             # bincount only works for non-negative values
             # but icells could be -1 or -2 for interp order 1 or (2,3)
             # so we artificially add the min (-1 or -2) and count the
             # number of occurence of cell indexes
             # this should be a list of only nbr_part_per_cell
+
+            gb_shape = pd.ghost_box.shape
+
             if dim == 1:
-                counts = np.bincount(icells-mincell)
-                self.assertTrue(np.all(counts == default_ppc))
+                i =  icells[:, 0]
+                self.assertTrue(np.all(np.bincount(i - i.min()) == default_ppc))
+
             elif dim == 2:
                 i =  icells[:, 0]
                 j =  icells[:, 1]
 
-                gb_shape = pd.ghost_box.shape
                 self.assertTrue(np.all(np.bincount(i - i.min()) == (gb_shape[1] * 100)))
                 self.assertTrue(np.all(np.bincount(j - j.min()) == (gb_shape[0] * 100)))
             elif dim == 3:
@@ -534,7 +537,6 @@ class InitializationTest(unittest.TestCase):
                 j =  icells[:, 1]
                 k =  icells[:, 2]
 
-                gb_shape = pd.ghost_box.shape
                 self.assertTrue(np.all(np.bincount(i - i.min()) == (gb_shape[2] * 100)))
                 self.assertTrue(np.all(np.bincount(j - j.min()) == (gb_shape[1] * 100)))
                 self.assertTrue(np.all(np.bincount(k - k.min()) == (gb_shape[0] * 100)))
@@ -603,18 +605,15 @@ class InitializationTest(unittest.TestCase):
 
         test_id = self.ddt_test_id()
 
-        b0 = [[10 for i in range(dim)], [19 for i in range(dim)]]
-        refinement_boxes = {"L0": {"B0": b0}}
+        refinement_boxes = {"L0": [nDBox(dim, 10, 19)]}
 
         local_out = f"{out}/dim{dim}_mpi_n_{cpp.mpi_size()}_id{test_id}/{str(has_patch_ghost)}"
         kwargs["diag_outputs"] = local_out
 
         interp=1 # not sure it matters for this test to do all interps
-        datahier = self.getHierarchy(interp, refinement_boxes, "particles_patch_ghost", **kwargs, ndim=dim)
+        datahier = self.getHierarchy(interp, refinement_boxes, "particles_patch_ghost", ndim=dim, **kwargs)
 
         self.assertTrue(any([diagInfo.quantity.endswith("patchGhost") for diagInfo in ph.global_vars.sim.diagnostics]))
-
-        key = "protons_particles"
         self.assertTrue((1 in datahier.levels()) == has_patch_ghost)
 
 

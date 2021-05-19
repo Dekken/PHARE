@@ -64,7 +64,10 @@ class AdvanceTestBase(unittest.TestCase):
         def bx(*xyz):
             return 1.
 
+
         def by(*xyz):
+            if len(xyz) > 1:
+                return 1
             from pyphare.pharein.global_vars import sim
             L = sim.simulation_domain()
             _ = lambda i: 0.1*np.cos(2*np.pi*xyz[i]/L[i])
@@ -280,11 +283,6 @@ class AdvanceTestBase(unittest.TestCase):
                         # periodic icell overlaps need shifting to be the same
                         part1.iCells = part1.iCells + offsets[0]
                         part2.iCells = part2.iCells + offsets[1]
-<<<<<<< HEAD
-
-                        self.assertEqual(part1, part2)
-=======
->>>>>>> 4e773ae (better, needs C++ diag shaping)
 
                         self.assertEqual(part1, part2)
 

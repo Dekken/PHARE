@@ -590,17 +590,6 @@ class Simulation(object):
 
 
 
-
-    def serialize(self):
-        import dill
-        import codecs
-        return codecs.encode(dill.dumps(self), 'hex')
-
-    def deserialize(hex):
-        import dill, codecs
-        return dill.loads(codecs.decode(hex, 'hex'))
-
-
 # ------------------------------------------------------------------------------
 
     def add_diagnostics(self, diag):
@@ -629,3 +618,11 @@ class Simulation(object):
     def set_electrons(self, electrons):
         self.electrons = electrons
 # ------------------------------------------------------------------------------
+
+
+def serialize(sim):
+    import dill, codecs
+    return codecs.encode(dill.dumps(sim), 'hex')
+
+def deserialize(hex):
+    return dill.loads(codecs.decode(hex, 'hex'))

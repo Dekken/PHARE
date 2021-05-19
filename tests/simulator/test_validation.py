@@ -8,7 +8,6 @@ cpp = cpp_lib()
 import unittest, os, pyphare.pharein as ph
 from datetime import datetime, timezone
 from ddt import ddt, data
-from tests.diagnostic import dump_all_diags
 from tests.simulator import NoOverwriteDict, populate_simulation
 from pyphare.simulator.simulator import Simulator,startMPI
 from pyphare.core.box import Box, Box2D
@@ -28,7 +27,6 @@ class SimulatorValidation(unittest.TestCase):
     def dup(dic):
         dic = NoOverwriteDict(dic)
         dic.update(diags.copy())
-        dic.update({"diags_fn": lambda model: dump_all_diags(model.populations)})
         return dic
 
     def tearDown(self):
@@ -170,8 +168,4 @@ class SimulatorValidation(unittest.TestCase):
         self._do_dim(2, input)
 
 if __name__ == "__main__":
-    try:
-        from concurrencytest import ConcurrentTestSuite, fork_for_tests
-        unittest.TextTestRunner().run(ConcurrentTestSuite(unittest.TestLoader().loadTestsFromTestCase(SimulatorRefineBoxInputs), fork_for_tests(12)))
-    except ImportError as err:
-        unittest.main()
+    unittest.main()
