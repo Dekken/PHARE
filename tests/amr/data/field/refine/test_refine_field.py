@@ -54,16 +54,21 @@ def refine(field, **kwargs):
 
     if fine_box.ndim == 2: # DOTO finish :(
         if primal_directions[0] and primal_directions[1]:
-            fine_data[ghostX:-ghostX:cadence,ghostY:-ghostY:cadence] = data[ghostX:-ghostX,ghostY:-ghostY]
-            fine_data[ghostX + 1:-(ghostX - 1):cadence, ghostY + 1:-(ghostY - 1):cadence] = 0.5*data[ghostX:-ghostX, ghostY:-ghostY] + 0.5*data[ghostX + 1:-(ghostX - 1),ghostY + 1:-(ghostY - 1)]
+          fine_data[ghostX:-ghostX:cadence,ghostY:-ghostY:cadence] = data[ghostX:-ghostX,ghostY:-ghostY]
+          fine_data[ghostX + 1:-(ghostX - 1):cadence, ghostY + 1:-(ghostY - 1):cadence] = 0.5*data[ghostX:-ghostX, ghostY:-ghostY] + 0.5*data[ghostX + 1:-(ghostX - 1),ghostY + 1:-(ghostY - 1)]
+          fine_data[ghostX :-(ghostX - 1):cadence, ghostY + 1:-(ghostY - 1):cadence] = 0.5*data[ghostX:-ghostX, ghostY:-ghostY] + 0.5*data[ghostX + 1:-(ghostX - 1),ghostY + 1:-(ghostY - 1)]
+          fine_data[ghostX +1 :-(ghostX - 1):cadence, ghostY :-(ghostY - 1):cadence] = 0.5*data[ghostX:-ghostX, ghostY:-ghostY] + 0.5*data[ghostX + 1:-(ghostX - 1),ghostY + 1:-(ghostY - 1)]
+
         elif not primal_directions[0] and not primal_directions[1]:
             fine_data[ghostX:-(ghostX + 1):cadence, ghostY:-(ghostY + 1):cadence] = 0.25*data[ghostX - 1:-(ghostX + 1), ghostY - 1:-(ghostY + 1)] + 0.75*data[ghostX:-ghostX, ghostY:-ghostY]
             fine_data[ghostX + 1:-(ghostX - 1):cadence, ghostY + 1:-(ghostY - 1):cadence] = 0.25*data[ghostX + 1:-(ghostX - 1), ghostY + 1:-(ghostY - 1)] + 0.75*data[ghostX:-ghostX, ghostY:-ghostY]
         elif primal_directions[0] and not primal_directions[1]:
-            pass # fine_data[ghostX:-ghostX:cadence, ghostY:-(ghostY + 1):cadence] = data[ghostX:-ghostX,ghostY:-ghostY]
-
+            fine_data[ghostX:-ghostX:cadence, ghostY:-(ghostY + 1):cadence] = 1 # data[ghostX:-ghostX,ghostY:-ghostY]
+            fine_data[ghostX + 1:-(ghostX - 1):cadence, ghostY + 1:-(ghostY - 1):cadence] = 2 # 0.5*data[ghostX:-ghostX] + 0.5*data[ghostX + 1:-(ghostX - 1)]
         elif not primal_directions[0] and primal_directions[1]:
-            pass
+            fine_data[ghostX:-(ghostX + 1):cadence, ghostY:-ghostY:cadence] = 1 # 0.25*data[ghostX - 1:-(ghostX + 1)] + 0.75*data[ghostX:-ghostX]
+            fine_data[ghostX + 1:-(ghostX - 1):cadence, ghostY + 1:-(ghostY - 1):cadence] = 2 # 0.25*data[ghostX + 1:-(ghostX - 1)] + 0.75*data[ghostX:-ghostX]
+
 
     return FieldData(fine_layout, field.field_name, data=fine_data)
 
