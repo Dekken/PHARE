@@ -80,14 +80,10 @@ class FieldData(PatchData):
         if overlap is not None:
             lower = self.layout.AMRIndexToLocal(dim=box.ndim - 1, index=overlap.lower)
             upper  = self.layout.AMRIndexToLocal(dim=box.ndim - 1, index=overlap.upper)
-            print("lower", lower)
-            print("upper", upper)
             if box.ndim == 1:
-                return self.dataset[lower[0]:upper[0] + 1]
+                return self.dataset[lower[0] : upper[0] + 1]
             if box.ndim == 2:
-                reshaped = self.dataset[:].reshape(self.ghost_box.shape + self.primal_directions())
-                print("self.dataset[:].shape", reshaped.shape)
-                return reshaped[lower[0]:upper[0] + 1 , lower[1] : upper[1] + 1]
+                return self.dataset[lower[0]:upper[0] + 1 , lower[1] : upper[1] + 1]
         return np.array([])
 
 

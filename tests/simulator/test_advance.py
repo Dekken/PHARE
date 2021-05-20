@@ -468,12 +468,13 @@ class AdvanceTestBase(unittest.TestCase):
             for qty in quantities:
                 for fine_level_ghost_box_data in fine_level_qty_ghost_boxes[qty]:
                     fine_subcycle_pd = fine_level_ghost_box_data["pdata"]
+
                     for fine_level_ghost_box in fine_level_ghost_box_data["boxes"]:
 
                         # trim the border level ghost nodes from the primal fields to ignore them in comparison checks
                         fine_level_ghost_boxes = fine_level_ghost_box - boxm.grow(fine_subcycle_pd.box, fine_subcycle_pd.primal_directions())
                         self.assertEqual(len(fine_level_ghost_boxes), 1) # should not be possibly > 1
-                        self.assertEqual(fine_level_ghost_boxes[0].shape, fine_level_ghost_box.shape - fine_subcycle_pd.primal_directions())
+                        np.testing.assert_equal(fine_level_ghost_boxes[0].shape, fine_level_ghost_box.shape - fine_subcycle_pd.primal_directions())
                         fine_level_ghost_box = fine_level_ghost_boxes[0]
 
                         upper_dims = fine_level_ghost_box.lower > fine_subcycle_pd.box.upper
