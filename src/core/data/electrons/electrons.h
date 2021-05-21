@@ -117,9 +117,9 @@ public:
             auto const JyOnVy = GridLayout::project(Jy, arr, GridLayout::JyToMoments());
             auto const JzOnVz = GridLayout::project(Jz, arr, GridLayout::JzToMoments());
 
-            Vex(arr) = Vix(arr) - JxOnVx / Ni(arr);
-            Vey(arr) = Viy(arr) - JyOnVy / Ni(arr);
-            Vez(arr) = Viz(arr) - JzOnVz / Ni(arr);
+            Vex(arr) = Vix(arr); // - JxOnVx / Ni(arr);
+            Vey(arr) = Viy(arr); // - JyOnVy / Ni(arr);
+            Vez(arr) = Viz(arr); // - JzOnVz / Ni(arr);
         };
 
         auto lowerX = layout.physicalStartIndex(Vex, Direction::X);

@@ -139,7 +139,7 @@ class AdvanceTestBase(unittest.TestCase):
                                       "nbr_part_per_cell": nbr_part_per_cell,
                                       "init": model_init})
 
-        ElectronModel(closure="isothermal", Te=0.12)
+        ElectronModel(closure="isothermal", Te=0)#0.12)
 
         if timestamps is None:
             timestamps = np.arange(0, global_vars.sim.final_time + global_vars.sim.time_step, global_vars.sim.time_step)
