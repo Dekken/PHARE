@@ -1,10 +1,5 @@
-#ifndef PHARE_FARADAY_H
-#define PHARE_FARADAY_H
-
-#if defined(PHARE_USE_ARRAY_2)
-#include "faraday2.h"
-#else
-
+#ifndef PHARE_FARADAY2_H
+#define PHARE_FARADAY2_H
 
 #include <cstddef>
 #include <iostream>
@@ -96,12 +91,12 @@ namespace core
             auto psi_Y = this->layout_->physicalStartIndex(Bxnew, Direction::Y);
             auto pei_Y = this->layout_->physicalEndIndex(Bxnew, Direction::Y);
 
-            for (auto ix = psi_X; ix <= pei_X; ++ix)
+            for (auto iy = psi_Y; iy <= pei_Y; ++iy)
             {
-                for (auto iy = psi_Y; iy <= pei_Y; ++iy)
+                for (auto ix = psi_X; ix <= pei_X; ++ix)
                 {
-                    Bxnew(ix, iy)
-                        = Bx(ix, iy)
+                    Bxnew[{ix, iy}]
+                        = Bx[{ix, iy}]
                           - dt * this->layout_->deriv(Ez, {ix, iy}, DirectionTag<Direction::Y>{});
                 }
             }
@@ -111,12 +106,12 @@ namespace core
             psi_Y = this->layout_->physicalStartIndex(Bynew, Direction::Y);
             pei_Y = this->layout_->physicalEndIndex(Bynew, Direction::Y);
 
-            for (auto ix = psi_X; ix <= pei_X; ++ix)
+            for (auto iy = psi_Y; iy <= pei_Y; ++iy)
             {
-                for (auto iy = psi_Y; iy <= pei_Y; ++iy)
+                for (auto ix = psi_X; ix <= pei_X; ++ix)
                 {
-                    Bynew(ix, iy)
-                        = By(ix, iy)
+                    Bynew[{ix, iy}]
+                        = By[{ix, iy}]
                           + dt * this->layout_->deriv(Ez, {ix, iy}, DirectionTag<Direction::X>{});
                 }
             }
@@ -126,12 +121,12 @@ namespace core
             psi_Y = this->layout_->physicalStartIndex(Bznew, Direction::Y);
             pei_Y = this->layout_->physicalEndIndex(Bznew, Direction::Y);
 
-            for (auto ix = psi_X; ix <= pei_X; ++ix)
+            for (auto iy = psi_Y; iy <= pei_Y; ++iy)
             {
-                for (auto iy = psi_Y; iy <= pei_Y; ++iy)
+                for (auto ix = psi_X; ix <= pei_X; ++ix)
                 {
-                    Bznew(ix, iy)
-                        = Bz(ix, iy)
+                    Bznew[{ix, iy}]
+                        = Bz[{ix, iy}]
                           - dt * this->layout_->deriv(Ey, {ix, iy}, DirectionTag<Direction::X>{})
                           + dt * this->layout_->deriv(Ex, {ix, iy}, DirectionTag<Direction::Y>{});
                 }
@@ -259,8 +254,6 @@ namespace core
 } // namespace core
 } // namespace PHARE
 
-
-#endif // PHARE_USE_ARRAY_2
 
 
 #endif

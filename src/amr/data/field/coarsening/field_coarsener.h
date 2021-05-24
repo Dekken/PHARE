@@ -90,6 +90,20 @@ namespace amr
                 auto const& xWeights = indexesAndWeights_.weights(core::Direction::X);
                 auto const& yWeights = indexesAndWeights_.weights(core::Direction::Y);
 
+#if defined(PHARE_USE_ARRAY_2)
+                for (std::size_t iShiftY = 0; iShiftY < yWeights.size(); ++iShiftY)
+                {
+                    double Xinterp = 0.;
+                    for (std::size_t iShiftX = 0; iShiftX < xWeights.size(); ++iShiftX)
+                    {
+                        Xinterp += fineField[{xStartIndex + iShiftX, yStartIndex + iShiftY}]
+                                   * xWeights[iShiftX];
+                    }
+
+                    coarseValue += Xinterp * yWeights[iShiftY];
+                }
+                coarseField[{coarseIndex[dirX], coarseIndex[dirY]}] = coarseValue;
+#else
                 for (std::size_t iShiftX = 0; iShiftX < xWeights.size(); ++iShiftX)
                 {
                     double Yinterp = 0.;
@@ -102,6 +116,7 @@ namespace amr
                     coarseValue += Yinterp * xWeights[iShiftX];
                 }
                 coarseField(coarseIndex[dirX], coarseIndex[dirY]) = coarseValue;
+#endif
             }
 
 

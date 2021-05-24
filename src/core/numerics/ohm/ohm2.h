@@ -1,9 +1,5 @@
-#ifndef PHARE_OHM_H
-#define PHARE_OHM_H
-
-#if defined(PHARE_USE_ARRAY_2)
-#include "ohm2.h"
-#else
+#ifndef PHARE_OHM2_H
+#define PHARE_OHM2_H
 
 #include <cstddef>
 #include <iostream>
@@ -374,14 +370,14 @@ namespace core
             auto iy0 = this->layout_->physicalStartIndex(Ex, Direction::Y);
             auto iy1 = this->layout_->physicalEndIndex(Ex, Direction::Y);
 
-            for (std::uint32_t ix = ix0; ix <= ix1; ++ix)
+            for (auto iy = iy0; iy <= iy1; ++iy)
             {
-                for (std::uint32_t iy = iy0; iy <= iy1; ++iy)
+                for (auto ix = ix0; ix <= ix1; ++ix)
                 {
-                    Ex(ix, iy) = ideal2D_(Ve, B, {ix, iy}, ComponentTag<Component::X>{})
-                                 + pressure_(n, Pe, {ix, iy}, ComponentTag<Component::X>{})
-                                 + resistive_(J, {ix, iy}, ComponentTag<Component::X>{})
-                                 + hyperresistive_(J, {ix, iy}, ComponentTag<Component::X>{});
+                    Ex[{ix, iy}] = ideal2D_(Ve, B, {ix, iy}, ComponentTag<Component::X>{})
+                                   + pressure_(n, Pe, {ix, iy}, ComponentTag<Component::X>{})
+                                   + resistive_(J, {ix, iy}, ComponentTag<Component::X>{})
+                                   + hyperresistive_(J, {ix, iy}, ComponentTag<Component::X>{});
                 }
             }
 
@@ -390,14 +386,14 @@ namespace core
             iy0 = this->layout_->physicalStartIndex(Ey, Direction::Y);
             iy1 = this->layout_->physicalEndIndex(Ey, Direction::Y);
 
-            for (std::uint32_t ix = ix0; ix <= ix1; ++ix)
+            for (auto iy = iy0; iy <= iy1; ++iy)
             {
-                for (std::uint32_t iy = iy0; iy <= iy1; ++iy)
+                for (auto ix = ix0; ix <= ix1; ++ix)
                 {
-                    Ey(ix, iy) = ideal2D_(Ve, B, {ix, iy}, ComponentTag<Component::Y>{})
-                                 + pressure_(n, Pe, {ix, iy}, ComponentTag<Component::Y>{})
-                                 + resistive_(J, {ix, iy}, ComponentTag<Component::Y>{})
-                                 + hyperresistive_(J, {ix, iy}, ComponentTag<Component::Y>{});
+                    Ey[{ix, iy}] = ideal2D_(Ve, B, {ix, iy}, ComponentTag<Component::Y>{})
+                                   + pressure_(n, Pe, {ix, iy}, ComponentTag<Component::Y>{})
+                                   + resistive_(J, {ix, iy}, ComponentTag<Component::Y>{})
+                                   + hyperresistive_(J, {ix, iy}, ComponentTag<Component::Y>{});
                 }
             }
 
@@ -406,14 +402,14 @@ namespace core
             iy0 = this->layout_->physicalStartIndex(Ez, Direction::Y);
             iy1 = this->layout_->physicalEndIndex(Ez, Direction::Y);
 
-            for (std::uint32_t ix = ix0; ix <= ix1; ++ix)
+            for (auto iy = iy0; iy <= iy1; ++iy)
             {
-                for (std::uint32_t iy = iy0; iy <= iy1; ++iy)
+                for (auto ix = ix0; ix <= ix1; ++ix)
                 {
-                    Ez(ix, iy) = ideal2D_(Ve, B, {ix, iy}, ComponentTag<Component::Z>{})
-                                 + pressure_(n, Pe, {ix, iy}, ComponentTag<Component::Z>{})
-                                 + resistive_(J, {ix, iy}, ComponentTag<Component::Z>{})
-                                 + hyperresistive_(J, {ix, iy}, ComponentTag<Component::Z>{});
+                    Ez[{ix, iy}] = ideal2D_(Ve, B, {ix, iy}, ComponentTag<Component::Z>{})
+                                   + pressure_(n, Pe, {ix, iy}, ComponentTag<Component::Z>{})
+                                   + resistive_(J, {ix, iy}, ComponentTag<Component::Z>{})
+                                   + hyperresistive_(J, {ix, iy}, ComponentTag<Component::Z>{});
                 }
             }
         }
@@ -514,6 +510,5 @@ namespace core
 } // namespace PHARE
 
 
-#endif // PHARE_USE_ARRAY_2
 
 #endif

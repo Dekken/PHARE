@@ -522,6 +522,21 @@ namespace amr
             std::uint32_t yDestinationEnd
                 = static_cast<std::uint32_t>(localDestinationBox.upper(1));
 
+
+#if defined(PHARE_USE_ARRAY_2)
+            for (std::uint32_t ySource = ySourceStart, yDestination = yDestinationStart;
+                 ySource <= ySourceEnd && yDestination <= yDestinationEnd;
+                 ++ySource, ++yDestination)
+            {
+                for (std::uint32_t xSource = xSourceStart, xDestination = xDestinationStart;
+                     xSource <= xSourceEnd && xDestination <= xDestinationEnd;
+                     ++xSource, ++xDestination)
+                {
+                    destination[{xDestination, yDestination}] = source[{xSource, ySource}];
+                }
+            }
+#else
+
             for (std::uint32_t xSource = xSourceStart, xDestination = xDestinationStart;
                  xSource <= xSourceEnd && xDestination <= xDestinationEnd;
                  ++xSource, ++xDestination)
@@ -533,6 +548,7 @@ namespace amr
                     destination(xDestination, yDestination) = source(xSource, ySource);
                 }
             }
+#endif
         }
 
 
@@ -548,6 +564,15 @@ namespace amr
             int yStart = overlap.lower(1) - destination.lower(1);
             int yEnd   = overlap.upper(1) - destination.lower(1);
 
+#if defined(PHARE_USE_ARRAY_2)
+            for (std::uint32_t yi = yStart; yi <= yEnd; ++yi)
+            {
+                for (std::uint32_t xi = xStart; xi <= xEnd; ++xi)
+                {
+                    buffer.push_back(source[{xi, yi}]);
+                }
+            }
+#else
             for (int xi = xStart; xi <= xEnd; ++xi)
             {
                 for (int yi = yStart; yi <= yEnd; ++yi)
@@ -555,6 +580,7 @@ namespace amr
                     buffer.push_back(source(xi, yi));
                 }
             }
+#endif
         }
 
 
@@ -570,6 +596,16 @@ namespace amr
             int yStart = overlap.lower(1) - destination.lower(1);
             int yEnd   = overlap.upper(1) - destination.lower(1);
 
+#if defined(PHARE_USE_ARRAY_2)
+            for (std::uint32_t yi = yStart; yi <= yEnd; ++yi)
+            {
+                for (std::uint32_t xi = xStart; xi <= xEnd; ++xi)
+                {
+                    source[{xi, yi}] = buffer[seek];
+                    ++seek;
+                }
+            }
+#else
             for (int xi = xStart; xi <= xEnd; ++xi)
             {
                 for (int yi = yStart; yi <= yEnd; ++yi)
@@ -578,6 +614,7 @@ namespace amr
                     ++seek;
                 }
             }
+#endif
         }
     };
 

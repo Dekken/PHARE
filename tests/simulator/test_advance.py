@@ -257,7 +257,7 @@ class AdvanceTestBase(unittest.TestCase):
                             np.testing.assert_equal(slice1, slice2)
                             # np.testing.assert_allclose(slice1, slice2, atol=1e-6)
                         except AssertionError as e:
-                            print("error", coarsest_time, overlap)
+                            print("error", coarsest_time, overlap, e)
                             # raise e
 
         self.assertGreater(check, time_step_nbr)

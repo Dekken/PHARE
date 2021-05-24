@@ -248,6 +248,10 @@ namespace core
     template<typename Ions, typename GridLayout>
     void fixMomentGhosts(Ions& ions, GridLayout const& layout)
     {
+#if defined(PHARE_USE_ARRAY_2)
+        return;
+#else
+
         using Mask = NdArrayMask;
 
         for (auto& pop : ions)
@@ -269,6 +273,7 @@ namespace core
             density[Mask{0, phyStartIdx - 2}] = NAN;
             density[Mask{phyStartIdx}] >> density[Mask{phyStartIdx - 1}];
         }
+#endif
     }
 
 } // namespace core

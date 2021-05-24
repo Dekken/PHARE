@@ -5,7 +5,7 @@ def cpp_lib():
     if not __debug__:
         return importlib.import_module("pybindlibs.cpp")
     try:
-        return importlib.import_module("pybindlibs.cpp_dbg")
+        return importlib.import_module("pybindlibs.cpp_arr_dbg")
     except ImportError as err:
         return importlib.import_module("pybindlibs.cpp")
 

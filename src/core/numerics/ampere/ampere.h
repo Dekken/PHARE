@@ -66,6 +66,15 @@ namespace core
             auto psi_Y = this->layout_->physicalStartIndex(Jx, Direction::Y);
             auto pei_Y = this->layout_->physicalEndIndex(Jx, Direction::Y);
 
+#if defined(PHARE_USE_ARRAY_2)
+            for (std::uint32_t iy = psi_Y; iy <= pei_Y; ++iy)
+            {
+                for (std::uint32_t ix = psi_X; ix <= pei_X; ++ix)
+                {
+                    Jx[{ix, iy}] = this->layout_->deriv(Bz, {ix, iy}, DirectionTag<Direction::Y>{});
+                }
+            }
+#else
             for (auto ix = psi_X; ix <= pei_X; ++ix)
             {
                 for (auto iy = psi_Y; iy <= pei_Y; ++iy)
@@ -73,12 +82,23 @@ namespace core
                     Jx(ix, iy) = this->layout_->deriv(Bz, {ix, iy}, DirectionTag<Direction::Y>{});
                 }
             }
+#endif
 
             psi_X = this->layout_->physicalStartIndex(Jy, Direction::X);
             pei_X = this->layout_->physicalEndIndex(Jy, Direction::X);
             psi_Y = this->layout_->physicalStartIndex(Jy, Direction::Y);
             pei_Y = this->layout_->physicalEndIndex(Jy, Direction::Y);
 
+#if defined(PHARE_USE_ARRAY_2)
+            for (std::uint32_t iy = psi_Y; iy <= pei_Y; ++iy)
+            {
+                for (std::uint32_t ix = psi_X; ix <= pei_X; ++ix)
+                {
+                    Jy[{ix, iy}]
+                        = -this->layout_->deriv(Bz, {ix, iy}, DirectionTag<Direction::X>{});
+                }
+            }
+#else
             for (auto ix = psi_X; ix <= pei_X; ++ix)
             {
                 for (auto iy = psi_Y; iy <= pei_Y; ++iy)
@@ -86,12 +106,25 @@ namespace core
                     Jy(ix, iy) = -this->layout_->deriv(Bz, {ix, iy}, DirectionTag<Direction::X>{});
                 }
             }
+#endif
 
             psi_X = this->layout_->physicalStartIndex(Jz, Direction::X);
             pei_X = this->layout_->physicalEndIndex(Jz, Direction::X);
             psi_Y = this->layout_->physicalStartIndex(Jz, Direction::Y);
             pei_Y = this->layout_->physicalEndIndex(Jz, Direction::Y);
 
+
+#if defined(PHARE_USE_ARRAY_2)
+            for (std::uint32_t iy = psi_Y; iy <= pei_Y; ++iy)
+            {
+                for (std::uint32_t ix = psi_X; ix <= pei_X; ++ix)
+                {
+                    Jz[{ix, iy}]
+                        = this->layout_->deriv(By, {ix, iy}, DirectionTag<Direction::X>{})
+                          - this->layout_->deriv(Bx, {ix, iy}, DirectionTag<Direction::Y>{});
+                }
+            }
+#else
             for (std::uint32_t ix = psi_X; ix <= pei_X; ++ix)
             {
                 for (std::uint32_t iy = psi_Y; iy <= pei_Y; ++iy)
@@ -100,6 +133,7 @@ namespace core
                                  - this->layout_->deriv(Bx, {ix, iy}, DirectionTag<Direction::Y>{});
                 }
             }
+#endif
         }
 
 

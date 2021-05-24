@@ -25,7 +25,7 @@ class AdvanceTest(AdvanceTestBase):
     @unpack
     def test_overlaped_fields_are_equal(self, interp_order, refinement_boxes):
         print(f"{self._testMethodName}_{ndim}d")
-        time_step_nbr=10
+        time_step_nbr=1
         time_step=0.001
         diag_outputs=f"phare_overlaped_fields_are_equal_{ndim}_{self.ddt_test_id()}"
         datahier = self.getHierarchy(interp_order, refinement_boxes, "eb", diag_outputs=diag_outputs,

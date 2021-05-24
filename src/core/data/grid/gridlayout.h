@@ -806,7 +806,11 @@ namespace core
                 }
                 if constexpr (dimension == 2)
                 {
+#if defined(PHARE_USE_ARRAY_2)
+                    result += wp.coef * field[{index[0] + wp.indexes[0], index[1] + wp.indexes[1]}];
+#else
                     result += wp.coef * field(index[0] + wp.indexes[0], index[1] + wp.indexes[1]);
+#endif
                 }
                 if constexpr (dimension == 3)
                 {
@@ -1108,6 +1112,19 @@ namespace core
 
             auto const [ix0, ix1] = startToEnd(centering, Direction::X);
 
+#if defined(PHARE_USE_ARRAY_2)
+            if constexpr (dimension == 1)
+                for (auto ix = ix0; ix < ix1 + plus; ++ix)
+                    indices.emplace_back(ix);
+
+            if constexpr (dimension == 2)
+            {
+                auto const [iy0, iy1] = startToEnd(centering, Direction::Y);
+                for (auto iy = iy0; iy < iy1 + plus; ++iy)
+                    for (auto ix = ix0; ix < ix1 + plus; ++ix)
+                        indices.emplace_back(ix, iy);
+            }
+#else
             for (auto ix = ix0; ix < ix1 + plus; ++ix)
             {
                 if constexpr (dimension > 1)
@@ -1134,6 +1151,7 @@ namespace core
                     indices.emplace_back(std::make_tuple(ix));
                 }
             }
+#endif
             return indices;
         }
 

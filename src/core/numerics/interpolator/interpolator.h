@@ -202,6 +202,19 @@ namespace core
 
             auto order_size        = xWeights.size();
             double fieldAtParticle = 0.;
+
+#if defined(PHARE_USE_ARRAY_2)
+            for (auto iy = 0u; iy < order_size; ++iy)
+            {
+                double Xinterp = 0.;
+                for (auto ix = 0u; ix < order_size; ++ix)
+                {
+                    Xinterp += field[{xStartIndex + ix, yStartIndex + iy}] * xWeights[ix];
+                }
+                fieldAtParticle += Xinterp * yWeights[iy];
+            }
+#else
+
             for (auto ix = 0u; ix < order_size; ++ix)
             {
                 double Yinterp = 0.;
@@ -211,6 +224,7 @@ namespace core
                 }
                 fieldAtParticle += Yinterp * xWeights[ix];
             }
+#endif
 
             return fieldAtParticle;
         }
@@ -386,7 +400,31 @@ namespace core
             auto const yPartFlux = particle.v[1] * particle.weight * coef;
             auto const zPartFlux = particle.v[2] * particle.weight * coef;
 
+
+
             auto order_size = xDenWeights.size();
+
+
+#if defined(PHARE_USE_ARRAY_2)
+            for (auto iy = 0u; iy < order_size; ++iy)
+            {
+                for (auto ix = 0u; ix < order_size; ++ix)
+                {
+                    density[{xDenStartIndex + ix, yDenStartIndex + iy}]
+                        += partRho * xDenWeights[ix] * yDenWeights[iy];
+
+                    xFlux[{xXFluxStartIndex + ix, yXFluxStartIndex + iy}]
+                        += xPartFlux * xXFluxWeights[ix] * yXFluxWeights[iy];
+
+                    yFlux[{xYFluxStartIndex + ix, yYFluxStartIndex + iy}]
+                        += yPartFlux * xYFluxWeights[ix] * yYFluxWeights[iy];
+
+                    zFlux[{xZFluxStartIndex + ix, yZFluxStartIndex + iy}]
+                        += zPartFlux * xZFluxWeights[ix] * yZFluxWeights[iy];
+                }
+            }
+#else
+
             for (auto ix = 0u; ix < order_size; ++ix)
             {
                 for (auto iy = 0u; iy < order_size; ++iy)
@@ -404,6 +442,7 @@ namespace core
                         += zPartFlux * xZFluxWeights[ix] * yZFluxWeights[iy];
                 }
             }
+#endif
         }
     };
 
@@ -416,14 +455,15 @@ namespace core
     class ParticleToMesh<3>
     {
     public: /** Performs the 3D interpolation
-             * \param[in] density is the field that will be interpolated from the particle Particle
-             * \param[in] xFlux is the field that will be interpolated from the particle Particle
-             * \param[in] yFlux is the field that will be interpolated from the particle Particle
-             * \param[in] zFlux is the field that will be interpolated from the particle Particle
-             * \param[in] fieldCentering is the centering (dual or primal) of the field in each
-             * direction \param[in] particle is the single particle used for the interpolation of
-             * density and flux \param[in] startIndex is the first index for which a particle will
-             * contribute \param[in] weights is the arrays of weights for the associated index
+             * \param[in] density is the field that will be interpolated from the particle
+             * Particle \param[in] xFlux is the field that will be interpolated from the
+             * particle Particle \param[in] yFlux is the field that will be interpolated from
+             * the particle Particle \param[in] zFlux is the field that will be interpolated
+             * from the particle Particle \param[in] fieldCentering is the centering (dual or
+             * primal) of the field in each direction \param[in] particle is the single particle
+             * used for the interpolation of density and flux \param[in] startIndex is the first
+             * index for which a particle will contribute \param[in] weights is the arrays of
+             * weights for the associated index
              */
         template<typename Field, typename Array1, typename Array2, typename Particle,
                  typename VectorCenteringArray>

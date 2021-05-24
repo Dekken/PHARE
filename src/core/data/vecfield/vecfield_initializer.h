@@ -52,8 +52,13 @@ namespace core
             Span<double>& grid = *gridPtr;
 
             for (std::size_t cell_idx = 0; cell_idx < indices.size(); cell_idx++)
+#if defined(PHARE_USE_ARRAY_2)
+                std::apply([&](auto&... args) { field[{args...}] = grid[cell_idx]; },
+                           indices[cell_idx]);
+#else
                 std::apply([&](auto&... args) { field(args...) = grid[cell_idx]; },
                            indices[cell_idx]);
+#endif
         }
 
 

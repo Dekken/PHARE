@@ -104,6 +104,19 @@ namespace amr
                 auto const& xLeftRightWeights = xWeights[iWeight[dirX]];
                 auto const& yLeftRightWeights = yWeights[iWeight[dirY]];
 
+#if defined(PHARE_USE_ARRAY_2)
+                for (std::size_t iShiftY = 0; iShiftY < yLeftRightWeights.size(); ++iShiftY)
+                {
+                    double Xinterp = 0.;
+                    for (std::size_t iShiftX = 0; iShiftX < xLeftRightWeights.size(); ++iShiftX)
+                    {
+                        Xinterp += sourceField[{xStartIndex + iShiftX, yStartIndex + iShiftY}]
+                                   * xLeftRightWeights[iShiftX];
+                    }
+                    fieldValue += Xinterp * yLeftRightWeights[iShiftY];
+                }
+                destinationField[{fineIndex[dirX], fineIndex[dirY]}] = fieldValue;
+#else
                 for (std::size_t iShiftX = 0; iShiftX < xLeftRightWeights.size(); ++iShiftX)
                 {
                     double Yinterp = 0.;
@@ -114,8 +127,8 @@ namespace amr
                     }
                     fieldValue += Yinterp * xLeftRightWeights[iShiftX];
                 }
-
                 destinationField(fineIndex[dirX], fineIndex[dirY]) = fieldValue;
+#endif
             }
 
 

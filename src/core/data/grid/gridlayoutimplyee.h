@@ -354,20 +354,22 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift}, 0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             else if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -388,19 +390,21 @@ namespace core
                 // since the linear combination is in the Y direction
                 // in 1D the moment is already on Ey so return 1 point with no shift
                 // with coef 1.
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1.};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1.};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -421,19 +425,20 @@ namespace core
                 // since the linear combination is in the Z direction
                 // in 1D or 2D the moment is already on Ez so return 1 point with no shift
                 // with coef 1.
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1.};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1.};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 1.};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 1.};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 3)
             {
                 // in 3D we need two points, the second with a primalToDual shift along Z
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, 0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, 0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -451,20 +456,22 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift}, 0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -482,19 +489,21 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -512,18 +521,19 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, 0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, 0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -540,20 +550,22 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift}, 0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -570,19 +582,21 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -600,18 +614,19 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, 0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, 0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -627,18 +642,19 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, 0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, 0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -656,20 +672,22 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1.};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1.};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
 
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -689,20 +707,22 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift}, 0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -720,20 +740,22 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1.};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1.};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
 
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -751,19 +773,20 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 1.};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 1.};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 3)
             {
                 // in 3D we need two points, the second with a dualToPrimal shift along Z
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{0, 0, iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{0, 0, iShift},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -781,20 +804,22 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift}, 0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 0.5};
-                constexpr WeightPoint<dimension> P2{Point<int, dimension>{iShift, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 0.5};
+                constexpr WeightPoint<dimension> P2{Point<std::uint32_t, dimension>{iShift, 0, 0},
+                                                    0.5};
                 return std::array<WeightPoint<dimension>, 2>{P1, P2};
             }
         }
@@ -810,17 +835,17 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
         }
@@ -836,17 +861,17 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
         }
@@ -862,17 +887,17 @@ namespace core
 
             if constexpr (dimension == 1)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0}, 1};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0}, 1};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             if constexpr (dimension == 2)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
             else if constexpr (dimension == 3)
             {
-                constexpr WeightPoint<dimension> P1{Point<int, dimension>{0, 0, 0}, 1.0};
+                constexpr WeightPoint<dimension> P1{Point<std::uint32_t, dimension>{0, 0, 0}, 1.0};
                 return std::array<WeightPoint<dimension>, 1>{P1};
             }
         }

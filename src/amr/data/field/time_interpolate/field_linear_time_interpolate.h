@@ -115,14 +115,20 @@ public:
             auto const iSrcStartX = localSrcBox.lower(dirX);
             auto const iSrcStartY = localSrcBox.lower(dirY);
 
-            for (auto ix = iDestStartX, ixSrc = iSrcStartX; ix <= iDestEndX; ++ix, ++ixSrc)
+#if defined(PHARE_USE_ARRAY_2)
+            return;
+#else
+
+            for (std::uint32_t iy = iDestStartY, iySrc = iSrcStartY; iy <= iDestEndY; ++iy, ++iySrc)
             {
-                for (auto iy = iDestStartY, iySrc = iSrcStartY; iy <= iDestEndY; ++iy, ++iySrc)
+                for (std::uint32_t ix = iDestStartX, ixSrc = iSrcStartX; ix <= iDestEndX;
+                     ++ix, ++ixSrc)
                 {
-                    fieldDest(ix, iy) = (1. - alpha) * fieldSrcOld(ixSrc, iySrc)
-                                        + alpha * fieldSrcNew(ixSrc, iySrc);
+                    fieldDest[{ix, iy}] = (1. - alpha) * fieldSrcOld[{ixSrc, iySrc}]
+                                          + alpha * fieldSrcNew[{ixSrc, iySrc}];
                 }
             }
+#endif
         }
         else if constexpr (dim == 3)
         {

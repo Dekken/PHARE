@@ -43,13 +43,13 @@ namespace core
     template<std::size_t dim>
     struct WeightPoint
     {
-        constexpr WeightPoint(Point<int, dim> point, double _coef)
+        constexpr WeightPoint(Point<std::uint32_t, dim> point, double _coef)
             : indexes{std::move(point)}
             , coef{_coef}
         {
         }
 
-        Point<int, dim> indexes;
+        Point<std::uint32_t, dim> indexes;
         double coef;
     };
 

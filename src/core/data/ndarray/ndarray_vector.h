@@ -1,6 +1,11 @@
 #ifndef PHARE_CORE_DATA_NDARRAY_NDARRAY_VECTOR_H
 #define PHARE_CORE_DATA_NDARRAY_NDARRAY_VECTOR_H
 
+#if defined(PHARE_USE_ARRAY_2)
+#include "ndarray_vector2.h"
+#else
+
+
 #include <stdexcept>
 #include <array>
 #include <cstdint>
@@ -455,5 +460,7 @@ void operator>>(MaskedView<Array, Mask>&& inner, MaskedView<Array, Mask>&& outer
 }
 
 } // namespace PHARE::core
+
+#endif // PHARE_USE_ARRAY_2
 
 #endif // PHARE_CORE_DATA_NDARRAY_NDARRAY_VECTOR_H
