@@ -166,8 +166,7 @@ namespace core
                 {
                     currentOut->charge = currentIn.charge;
                     currentOut->weight = currentIn.weight;
-                    for (std::size_t i = 0; i < 3; ++i)
-                        currentOut->v[i] = currentIn.v[i];
+                    currentOut->v      = currentIn.v;
                 }
                 // push the particle
                 advancePosition_(currentIn, *currentOut);
