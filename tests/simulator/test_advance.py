@@ -208,9 +208,8 @@ class AdvanceTestBase(unittest.TestCase):
 
 
 
-    def _test_overlaped_fields_are_equal(self, datahier, time_step_nbr, time_step):
-        if cpp.mpi_rank() > 0: return
-        check=0
+    def base_test_overlaped_fields_are_equal(self, datahier, time_step_nbr, time_step):
+        checks = 0
 
         for time_step_idx in range(time_step_nbr + 1):
             coarsest_time =  time_step_idx * time_step
@@ -227,7 +226,7 @@ class AdvanceTestBase(unittest.TestCase):
                     self.assertEqual(pd1.quantity, pd2.quantity)
 
                     if pd1.quantity == 'field':
-                        check+=1
+                        checks += 1
 
                         # we need to transform the AMR overlap box, which is thus
                         # (because AMR) common to both pd1 and pd2 into local index
@@ -259,9 +258,16 @@ class AdvanceTestBase(unittest.TestCase):
                         except AssertionError as e:
                             print("error", time_step_idx, coarsest_time, overlap, e)
                             raise e
+        return checks
 
+
+    def _test_overlaped_fields_are_equal(self, datahier, time_step_nbr, time_step):
+        if cpp.mpi_rank() > 0: return
+        checks = self.base_test_overlaped_fields_are_equal(datahier, time_step_nbr, time_step)
         self.assertGreater(check, time_step_nbr)
         self.assertEqual(check % time_step_nbr, 0)
+
+
 
 
 
