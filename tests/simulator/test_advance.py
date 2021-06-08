@@ -208,7 +208,7 @@ class AdvanceTestBase(unittest.TestCase):
 
 
 
-    def _test_overlaped_fields_are_equal(self, time_step, time_step_nbr, datahier):
+    def _test_overlaped_fields_are_equal(self, datahier, time_step_nbr, time_step):
         if cpp.mpi_rank() > 0: return
         check=0
 
