@@ -214,7 +214,8 @@ class AdvanceTestBase(unittest.TestCase):
 
         for time_step_idx in range(time_step_nbr + 1):
             coarsest_time =  time_step_idx * time_step
-
+            if coarsest_time not in datahier.patch_levels:
+                continue
             for ilvl, overlaps in hierarchy_overlaps(datahier, coarsest_time).items():
 
                 for overlap in overlaps:
@@ -256,8 +257,8 @@ class AdvanceTestBase(unittest.TestCase):
                             # np.testing.assert_equal(slice1, slice2)
                             np.testing.assert_allclose(slice1, slice2, atol=1e-16)
                         except AssertionError as e:
-                            print("error", coarsest_time, overlap, e)
-                            # raise e
+                            print("error", time_step_idx, coarsest_time, overlap, e)
+                            raise e
 
         self.assertGreater(check, time_step_nbr)
         self.assertEqual(check % time_step_nbr, 0)

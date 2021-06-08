@@ -4,7 +4,7 @@ from pyphare.pharein import Simulation
 from pyphare.pharein import MaxwellianFluidModel
 from pyphare.pharein import ElectromagDiagnostics,FluidDiagnostics, ParticleDiagnostics
 from pyphare.pharein import ElectronModel
-from pyphare.simulator.simulator import Simulator
+from pyphare.simulator.simulator import Simulator, startMPI
 from pyphare.pharein import global_vars as gv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,15 +12,15 @@ import matplotlib as mpl
 mpl.use('Agg')
 
 diag_outputs = "."
-time_step_nbr=50,
-time_step=.001,
+time_step_nbr=5000
+time_step=.001
 
 def config():
     Simulation(
         smallest_patch_size=20,
         largest_patch_size=20,
-        time_step_nbr=30,
-        time_step=.001,
+        time_step_nbr=time_step_nbr,
+        time_step=time_step,
         cells=(120, 60),
         dl=(0.2, 0.2),
         hyper_resistivity=0.01,
@@ -95,35 +95,60 @@ def config():
     dt = 10*sim.time_step
     nt = sim.final_time/dt+1
     timestamps = dt * np.arange(nt)
-    print(timestamps)
+    # print(timestamps)
     for quantity in ["E", "B"]:
         ElectromagDiagnostics(
             quantity=quantity,
             write_timestamps=timestamps,
             compute_timestamps=timestamps,
+            flush_every=100
         )
-    for quantity in ["density", "bulkVelocity"]:
-        FluidDiagnostics(
-            quantity=quantity,
-            write_timestamps=timestamps,
-            compute_timestamps=timestamps,
-            )
+    for quantity in ['domain', 'levelGhost', 'patchGhost']:
+        ParticleDiagnostics(quantity=quantity,
+                            compute_timestamps=timestamps,
+                            write_timestamps=timestamps,
+                            population_name="protons")
+
+    # for quantity in ["density", "bulkVelocity"]:
+    #     FluidDiagnostics(
+    #         quantity=quantity,
+    #         write_timestamps=timestamps,
+    #         compute_timestamps=timestamps,
+    #         )
 
 def main():
     config()
+    startMPI()
     Simulator(gv.sim).run()
 
 if __name__=="__main__":
     main()
 
-    from pyphare.pharesee.hierarchy import hierarchy_from
+    from pyphare.cpp import cpp_lib
+    cpp = cpp_lib()
+    if cpp.mpi_rank() == 0:
+        from pyphare.pharesee.hierarchy import hierarchy_from, merge_particles
+        datahier = None
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", hier=datahier)
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", hier=datahier)
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_domain.h5")
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_levelGhost.h5", hier=datahier)
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_patchGhost.h5", hier=datahier)
+        merge_particles(datahier)
+
+        from tests.simulator.test_advance import AdvanceTestBase
+        test = AdvanceTestBase()
+
+        n_particles = 100 * 60 * 120
+        for time_step_idx in range(time_step_nbr + 1):
+            coarsest_time =  time_step_idx * time_step
+            print("coarsest_time", coarsest_time)
+            n_particles_at_t = 0
+            if not datahier.has_time(coarsest_time): continue
+            for patch in datahier.level(0, coarsest_time).patches:
+                n_particles_at_t += patch.patch_datas["protons_particles"].dataset[patch.box].size()
+            test.assertEqual(n_particles, n_particles_at_t)
+            print("coarsest_time", coarsest_time, n_particles_at_t)
 
 
-    eb_hier = None
-    eb_hier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", hier=eb_hier)
-    eb_hier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", hier=eb_hier)
-    from tests.simulator.test_advance import _test_overlaped_fields_are_equal
-
-    test = AdvanceTestBase()
-    test._test_overlaped_fields_are_equal(eb_hier, time_step_nbr, time_step)
-
+        test._test_overlaped_fields_are_equal(datahier, time_step_nbr, time_step)
