@@ -5,7 +5,7 @@ from pyphare.pharein import Simulation
 from pyphare.pharein import MaxwellianFluidModel
 from pyphare.pharein import ElectromagDiagnostics,FluidDiagnostics, ParticleDiagnostics
 from pyphare.pharein import ElectronModel
-from pyphare.simulator.simulator import Simulator
+from pyphare.simulator.simulator import Simulator, startMPI
 from pyphare.pharein import global_vars as gv
 
 import numpy as np
@@ -165,22 +165,24 @@ def config():
 def main():
 
     config()
-    Simulator(gv.sim).run()
+    startMPI()
+    #Simulator(gv.sim).run()
 
     from pyphare.cpp import cpp_lib
     cpp = cpp_lib()
     if cpp.mpi_rank() == 0:
-
+        from datetime import datetime
         from tests.simulator.test_advance import AdvanceTestBase
         test = AdvanceTestBase()
 
-        coarsest_time = (gv.sim.time_step * check_idx)
-
+        print("opening diags")
         from pyphare.pharesee.hierarchy import hierarchy_from
+        now = datetime.now()
         datahier = None
         datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", hier=datahier)
         datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", hier=datahier)
-        test.base_test_overlaped_fields_are_equal(datahier, time_step_nbr, time_step)
+        print("diags opened in", datetime.now() - now)
+        test.base_test_overlaped_fields_are_equal(datahier, time_step_nbr, ph.global_vars.sim.time_step)
 
         # datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_domain.h5", hier=datahier)
         # datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_levelGhost.h5", hier=datahier)

@@ -213,8 +213,10 @@ class AdvanceTestBase(unittest.TestCase):
 
         for time_step_idx in range(time_step_nbr + 1):
             coarsest_time =  time_step_idx * time_step
-            if coarsest_time not in datahier.patch_levels:
+            print("coarsest_time in? ", coarsest_time)
+            if not datahier.has_time(coarsest_time):
                 continue
+            print("coarsest_time in!", coarsest_time, checks)
             for ilvl, overlaps in hierarchy_overlaps(datahier, coarsest_time).items():
 
                 for overlap in overlaps:
