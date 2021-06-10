@@ -437,6 +437,9 @@ class PatchHierarchy:
         assert (level_number >= 0)
         return boxm.refine(self.domain_box, self.refinement_ratio ** level_number)
 
+    def has_time(self, timestamp):
+        return self.format_timestamp(timestamp) in self.time_hier
+
 
     def format_timestamp(self, timestamp):
         if isinstance(timestamp, str):
