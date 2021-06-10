@@ -166,7 +166,7 @@ def main():
 
     config()
     startMPI()
-    #Simulator(gv.sim).run()
+    Simulator(gv.sim).run()
 
     from pyphare.cpp import cpp_lib
     cpp = cpp_lib()
