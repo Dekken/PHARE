@@ -1,21 +1,19 @@
 #ifndef PHARE_ION_UPDATER_H
 #define PHARE_ION_UPDATER_H
 
+#include <memory>
 
+#include "core/logger.h"
+#include "core/data/ions/ions.h"
 #include "core/utilities/box/box.h"
 #include "core/numerics/interpolator/interpolator.h"
 #include "core/numerics/pusher/pusher.h"
 #include "core/numerics/pusher/pusher_factory.h"
 #include "core/numerics/boundary_condition/boundary_condition.h"
 #include "core/numerics/moments/moments.h"
-
-#include "core/data/ions/ions.h"
-
 #include "initializer/data_provider.h"
 
-#include "core/logger.h"
-
-#include <memory>
+#include "core/utilities/mpi_utils.h"
 
 // TODO alpha coef for interpolating new and old levelGhost should be given somehow...
 
@@ -147,12 +145,17 @@ void IonUpdater<Ions, Electromag, GridLayout>::updateAndDepositDomain_(Ions& ion
         auto newEnd
             = pusher_->move(inRange, outRange, em, pop.mass(), interpolator_, inDomainBox, layout);
 
+        int entered = 0;
+        int left    = std::distance(newEnd, inRange.end());
+
+        std::cout << __FILE__ << " " << __LINE__ << " " << entered << std::endl;
+
         interpolator_(std::begin(domain), newEnd, pop.density(), pop.flux(), layout);
 
         // then push patch and level ghost particles
-        // push those in the ghostArea (i.e. stop pushing if they're not out of it)
-        // some will leave the ghost area
-        // deposit moments on those which leave to go inDomainBox
+        // push those in the ghostArea (i.e. stop pushing if they're not
+        // out of it) some will leave the ghost area deposit moments on
+        // those which leave to go inDomainBox
 
         auto pushAndAccumulateGhosts = [&](auto& inputArray, auto& outputArray,
                                            bool copyInDomain = false) {
@@ -169,17 +172,31 @@ void IonUpdater<Ions, Electromag, GridLayout>::updateAndDepositDomain_(Ions& ion
             interpolator_(firstGhostOut, endInDomain, pop.density(), pop.flux(), layout);
 
             if (copyInDomain)
+            {
                 std::copy(firstGhostOut, endInDomain, std::back_inserter(domain));
+                entered = std::distance(firstGhostOut, endInDomain);
+                std::cout << __FILE__ << " " << __LINE__ << " " << entered << std::endl;
+
+                std::cout << __FILE__ << " " << __LINE__ << " " << core::mpi::sum(left)
+                          << std::endl;
+                std::cout << __FILE__ << " " << __LINE__ << " " << core::mpi::sum(entered)
+                          << std::endl;
+
+                // if (core::mpi::sum(left) != core::mpi::sum(entered))
+                //     PHARE_LOG_ERROR("Error, particle domain/ghost move mismatch");
+            }
         };
 
-        // After this function is done domain particles overlaping ghost layers of neighbor patches
-        // are sent to these neighbor's patchghost particle array.
-        // After being pushed, some patch ghost particles may enter the domain. These need to be
-        // copied into the domain array so they are transfered to the neighbor patch
-        // ghost array and contribute to moments there too.
-        // On the contrary level ghost particles entering the domain here do not need to be copied
-        // since they contribute to nodes that are not shared with neighbor patches an since
-        // level border nodes will receive contributions from levelghost old and new particles
+        // After this function is done domain particles overlaping ghost
+        // layers of neighbor patches are sent to these neighbor's
+        // patchghost particle array. After being pushed, some patch ghost
+        // particles may enter the domain. These need to be copied into the
+        // domain array so they are transfered to the neighbor patch ghost
+        // array and contribute to moments there too. On the contrary level
+        // ghost particles entering the domain here do not need to be
+        // copied since they contribute to nodes that are not shared with
+        // neighbor patches an since level border nodes will receive
+        // contributions from levelghost old and new particles
         pushAndAccumulateGhosts(pop.patchGhostParticles(), tmpPatchGhost, true);
         pushAndAccumulateGhosts(pop.levelGhostParticles(), tmpLevelGhost);
     }

@@ -8,6 +8,10 @@ class Particles:
     particles can either be loaded randomly in a given box or have there attribute set from caller
     """
     def __init__(self, **kwargs):
+
+        self.oiCells  = None
+        self.odeltas  = None
+
         if "box" in kwargs:
             box = kwargs["box"]
 
@@ -22,6 +26,8 @@ class Particles:
         else:
             self.iCells  = kwargs["icells"][:]
             self.deltas  = kwargs["deltas"][:]
+            self.oiCells  = kwargs["oicells"][:]
+            self.odeltas  = kwargs["odeltas"][:]
             self.v       = kwargs["v"][:]
             self.weights = kwargs["weights"][:]
             self.charges = kwargs["charges"][:]
@@ -70,6 +76,8 @@ class Particles:
         self.charges  = np.concatenate((self.charges, particles.charges))
         self.weights  = np.concatenate((self.weights, particles.weights))
         self.dl       = np.concatenate((self.dl, particles.dl))
+        self.oiCells   = np.concatenate((self.oiCells, particles.oiCells))
+        self.odeltas   = np.concatenate((self.odeltas, particles.odeltas))
         self._reset()
 
 
@@ -124,6 +132,8 @@ class Particles:
 
         return Particles(icells=self.iCells[idx],
                          deltas=self.deltas[idx],
+                         oicells=self.oiCells[idx],
+                         odeltas=self.odeltas[idx],
                          v = self.v[idx,:],
                          weights=self.weights[idx],
                          charges=self.charges[idx],
@@ -279,4 +289,16 @@ def _arg_sort(particles):
         return np.argsort(np.sqrt((x1 ** 2 + y1 ** 2 + z1 ** 2)) / (x1 / y1 / z1))
 
 
+def o_arg_sort(particles):
+    x1 = particles.oiCells[:,0] + particles.odeltas[:,0]
 
+    if particles.ndim == 1:
+        return np.argsort(x1)
+
+    if particles.ndim > 1:
+        y1 = particles.oiCells[:,1] + particles.odeltas[:,1]
+        return np.argsort(np.sqrt((x1 ** 2 + y1 ** 2)) / (x1 / y1))
+
+    if particles.ndim == 3:
+        z1 = particles.oiCells[:,2] + particles.odeltas[:,2]
+        return np.argsort(np.sqrt((x1 ** 2 + y1 ** 2 + z1 ** 2)) / (x1 / y1 / z1))

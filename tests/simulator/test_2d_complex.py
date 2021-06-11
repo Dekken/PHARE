@@ -22,12 +22,12 @@ ppc=100
 def config():
 
     Simulation(
-        smallest_patch_size=10,
-        # largest_patch_size=20,
+        smallest_patch_size=20,
+        largest_patch_size=20,
         time_step_nbr=time_step_nbr,
         time_step=time_step,
         #boundary_types="periodic",
-        cells=(120, 120),
+        cells=(120, 60),
         dl=(0.2, 0.2),
         #refinement="tagging",
         #max_nbr_levels = 3,
@@ -156,23 +156,44 @@ from pyphare.pharesee.hierarchy import hierarchy_from
 from tests.simulator.test_advance import AdvanceTestBase
 test = AdvanceTestBase()
 
+def load_time(time, datahier = None):
+    datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", time=time, hier=datahier)
+    datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", time=time, hier=datahier)
+
+    datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_domain.h5")
+    datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_levelGhost.h5", hier=datahier)
+    datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_patchGhost.h5", hier=datahier)
+
+    from pyphare.pharesee.hierarchy import merge_particles
+    merge_particles(datahier)
+    return datahier
+
+
 def post_advance(new_time):
+    import sys
     if cpp.mpi_rank() == 0:
         print("Checking simulation time", new_time)
         time     = "{:.10f}".format(new_time)
-        datahier = None
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", time=time, hier=datahier)
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", time=time, hier=datahier)
-        test.base_test_overlaped_fields_are_equal(datahier, time)
+        datahier = load_time(time)
+        # test.base_test_overlaped_fields_are_equal(datahier, time)
 
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_domain.h5")
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_levelGhost.h5", hier=datahier)
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_patchGhost.h5", hier=datahier)
-
-        from pyphare.pharesee.hierarchy import merge_particles
-        merge_particles(datahier)
         # test.base_test_overlapped_particledatas_have_identical_particles(datahier, time)
-        test.base_test_L0_particle_number_conservation(datahier, time, ppc * np.array(gv.sim.cells).prod())
+        r = test.base_test_L0_particle_number_conservation(datahier, time, ppc * np.array(gv.sim.cells).prod())
+        print(r)
+        if r[0]:
+            for i in range(0, 6):
+                time     = "{:.10f}".format(time_step * i)
+                print("time", time)
+                datahier = load_time(time)
+                for patch in datahier.level(0, time).patches:
+                    particles = patch.patch_datas["protons_particles"].dataset[patch.box]
+                    for i in range(particles.size()):
+                        if particles.oiCells[i] + particles.odeltas[i] in r[1]:
+                            print("0", particles.oiCells[i] + particles.odeltas[i])
+                            print("1", particles.iCells[i] + particles.deltas[i])
+            print("exit")
+            sys.exit(1)
+
 
 
 def main():

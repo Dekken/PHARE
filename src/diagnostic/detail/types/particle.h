@@ -147,6 +147,8 @@ void ParticlesDiagnosticWriter<H5Writer>::initDataSets(
         std::string path{h5Writer_.getPatchPathAddTimestamp(lvl, patchID) + "/"};
         std::size_t part_idx = 0;
         core::apply(Packer::empty(), [&](auto const& arg) {
+            std::cout << __FILE__ << " " << __LINE__ << " " << (path + Packer::keys()[part_idx])
+                      << std::endl;
             createDataSet(path + Packer::keys()[part_idx], attr, Packer::keys()[part_idx], arg,
                           null);
             ++part_idx;
@@ -188,11 +190,16 @@ void ParticlesDiagnosticWriter<H5Writer>::write(DiagnosticProperties& diagnostic
         packer.pack(copy);
 
 
+        std::cout << __FILE__ << " " << __LINE__ << " " << std::endl;
+
         h5file.template write_data_set_flat<2>(path + packer.keys()[0], copy.weight.data());
         h5file.template write_data_set_flat<2>(path + packer.keys()[1], copy.charge.data());
         h5file.template write_data_set_flat<2>(path + packer.keys()[2], copy.iCell.data());
         h5file.template write_data_set_flat<2>(path + packer.keys()[3], copy.delta.data());
         h5file.template write_data_set_flat<2>(path + packer.keys()[4], copy.v.data());
+        // h5file.template write_data_set_flat<1>(path + packer.keys()[5], copy.uuids.data());
+        h5file.template write_data_set_flat<2>(path + packer.keys()[5], copy.oiCell.data());
+        h5file.template write_data_set_flat<2>(path + packer.keys()[6], copy.odelta.data());
     };
 
     auto checkWrite = [&](auto& tree, auto pType, auto& ps) {

@@ -31,6 +31,8 @@ int size();
 
 int rank();
 
+int sum(int local);
+
 template<typename Data>
 auto mpi_type_for()
 {

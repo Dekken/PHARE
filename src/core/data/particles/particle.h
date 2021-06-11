@@ -48,6 +48,10 @@ struct Particle
     std::array<double, dim> delta = ConstArray<double, dim>();
     std::array<double, 3> v       = ConstArray<double, 3>();
 
+    // std::string uuid{cellAsPoint(*this).str() + "_" + core::to_string(this)};
+    std::array<int, dim> oiCell{iCell};
+    std::array<double, dim> odelta{delta};
+
     double Ex = 0, Ey = 0, Ez = 0;
     double Bx = 0, By = 0, Bz = 0;
 
@@ -79,6 +83,8 @@ struct ParticleView
     std::array<int, dim>& iCell;
     std::array<double, dim>& delta;
     std::array<double, 3>& v;
+    std::array<int, dim>& oiCell;
+    std::array<double, dim>& odelta;
 };
 
 
@@ -100,6 +106,8 @@ struct ContiguousParticles
         , weight(s)
         , charge(s)
         , v(s * 3)
+        , oiCell(s * dim)
+        , odelta(s * dim)
     {
     }
 
@@ -127,11 +135,13 @@ struct ContiguousParticles
     Return _to(std::size_t i)
     {
         return {
-            *const_cast<double*>(weight.data() + i),     //
-            *const_cast<double*>(charge.data() + i),     //
-            *_array_cast<dim>(iCell.data() + (dim * i)), //
-            *_array_cast<dim>(delta.data() + (dim * i)), //
-            *_array_cast<3>(v.data() + (3 * i)),
+            *const_cast<double*>(weight.data() + i),      //
+            *const_cast<double*>(charge.data() + i),      //
+            *_array_cast<dim>(iCell.data() + (dim * i)),  //
+            *_array_cast<dim>(delta.data() + (dim * i)),  //
+            *_array_cast<3>(v.data() + (3 * i)),          //
+            *_array_cast<dim>(oiCell.data() + (dim * i)), //
+            *_array_cast<dim>(odelta.data() + (dim * i)), //
         };
     }
 
@@ -172,6 +182,9 @@ struct ContiguousParticles
     container_t<int> iCell;
     container_t<double> delta;
     container_t<double> weight, charge, v;
+
+    container_t<int> oiCell;
+    container_t<double> odelta;
 };
 
 

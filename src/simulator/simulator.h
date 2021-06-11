@@ -13,6 +13,9 @@
 
 #include <chrono>
 #include <exception>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 
 namespace PHARE
@@ -127,6 +130,10 @@ private:
     }
 
     std::shared_ptr<MultiPhysicsIntegrator> multiphysInteg_{nullptr};
+
+    std::streambuf* coutbuf = std::cout.rdbuf();
+    std::string outFile{".log/" + std::to_string(core::mpi::rank()) + ".out"};
+    std::ofstream newout{outFile.c_str()};
 };
 
 
@@ -211,6 +218,9 @@ Simulator<_dimension, _interp_order, _nbRefinedPart>::Simulator(
     }
     else
         throw std::runtime_error("unsupported model");
+
+
+    std::cout.rdbuf(newout.rdbuf());
 }
 
 

@@ -838,6 +838,8 @@ def add_to_patchdata(patch_datas, h5_patch_grp, basename, layout):
                               v=v,
                               weights=h5_patch_grp["weight"],
                               charges=h5_patch_grp["charge"],
+                              oicells=h5_patch_grp["oiCell"],
+                              odeltas=h5_patch_grp["odelta"],
                               dl=dl)
 
         pdname = particle_dataset_name(basename)

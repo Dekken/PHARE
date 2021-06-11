@@ -22,7 +22,7 @@ public:
     static auto get(Particle<dim> const& particle)
     {
         return std::forward_as_tuple(particle.weight, particle.charge, particle.iCell,
-                                     particle.delta, particle.v);
+                                     particle.delta, particle.v, particle.oiCell, particle.odelta);
     }
 
     static auto empty()
@@ -51,14 +51,19 @@ public:
             copyTo(std::get<2>(next), idx, dim, copy.iCell);
             copyTo(std::get<3>(next), idx, dim, copy.delta);
             copyTo(std::get<4>(next), idx, 3, copy.v);
-            idx++;
+
+            copyTo(std::get<5>(next), idx, dim, copy.oiCell);
+            copyTo(std::get<6>(next), idx, dim, copy.odelta);
+
+            ++idx;
         }
     }
 
 private:
     ParticleArray<dim> const& particles_;
     std::size_t it_ = 0;
-    static inline std::array<std::string, 5> keys_{"weight", "charge", "iCell", "delta", "v"};
+    static inline std::array<std::string, 7> keys_{"weight", "charge", "iCell", "delta",
+                                                   "v",      "oiCell", "odelta"};
 };
 
 

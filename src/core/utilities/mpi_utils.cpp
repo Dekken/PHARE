@@ -27,11 +27,17 @@ std::size_t max(std::size_t const local, int mpi_size)
 
 
 
+int sum(int local_sum)
+{
+    int global_sum = 0;
+    MPI_Allreduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    return global_sum;
+}
+
 bool any(bool b)
 {
-    int global_sum, local_sum = static_cast<int>(b);
-    MPI_Allreduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    return global_sum > 0;
+    return sum(static_cast<int>(b)) > 0;
 }
+
 
 } // namespace PHARE::core::mpi

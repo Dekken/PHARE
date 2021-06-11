@@ -32,7 +32,7 @@ void registerDiagnostics(DiagManager& dMan, initializer::PHAREDict const& diagsP
         {
             const std::string diagName = diagType + std::to_string(diagBlockID);
             dMan.addDiagDict(diagsParams[diagType][diagName]);
-            diagBlockID++;
+            ++diagBlockID;
         }
     }
 }

@@ -4,6 +4,7 @@ cpp = cpp_lib()
 from pyphare.simulator.simulator import Simulator, startMPI
 from pyphare.core.phare_utilities import np_array_ify
 from pyphare.pharesee.hierarchy import hierarchy_from, merge_particles
+from pyphare.pharesee.particles import o_arg_sort
 from pyphare.pharein import MaxwellianFluidModel
 from pyphare.pharein.diagnostics import ParticleDiagnostics, FluidDiagnostics, ElectromagDiagnostics
 from pyphare.pharein import ElectronModel
@@ -329,19 +330,43 @@ class AdvanceTestBase(unittest.TestCase):
 
 
     def base_test_L0_particle_number_conservation(self, datahier, coarsest_time, n_particles):
+        patches = datahier.level(0, coarsest_time).patches
         n_particles_at_t = 0
-        for patch in datahier.level(0, coarsest_time).patches:
+        for patch in patches:
             print("patch.patch_datas.keys", list(patch.patch_datas.keys()), patch.box.shape)
             n_particles_at_t += patch.patch_datas["protons_particles"].dataset[patch.box].size()
-        self.assertEqual(n_particles, n_particles_at_t)
 
-        patches = datahier.level(0, coarsest_time).patches
+        if n_particles_at_t != n_particles:
+            particles = patches[0].patch_datas["protons_particles"].dataset[patches[0].box]
+            for i in range(1, len(patches)):
+                particles.add(patches[i].patch_datas["protons_particles"].dataset[patches[i].box])
+
+            args = o_arg_sort(particles)
+            print("shape", particles.oiCells.shape, particles.odeltas.shape, particles.size())
+            check = particles.oiCells + particles.odeltas
+            u, c = np.unique(check, axis=0, return_counts=True)
+            print("np.unique", u.shape, u)
+            u = u[c > 1]
+            print("np.unique", u.shape, u)
+            return (True, u)
+
+            check = particles.iCells + particles.deltas
+            u, c = np.unique(check, axis=0, return_counts=True)
+            print("np.unique", u.shape, u)
+            u = u[c > 1]
+            print("np.unique", u.shape, u)
+
+        self.assertEqual(n_particles, n_particles_at_t)
+        print("n_particles_at_t", n_particles_at_t)
+
         for patch_i, patch0 in enumerate(patches):
             for patch1 in patches[patch_i:]:
                 assert patch0.box * patch1.box == None
 
         fig = datahier.plot_2d_patches(0, [p.box for p in patches])
         fig.savefig("base_test_L0_particle_number_conservation.png")
+
+        return (False, 0)
 
 
 

@@ -211,6 +211,14 @@ namespace core
     using tuple_fixed_type = decltype(get_fixed_tuple<T, N>());
 
 
+    template<typename T>
+    std::string to_string(T* t)
+    {
+        std::stringstream ss;
+        ss << t;
+        return ss.str();
+    }
+
 
 } // namespace core
 } // namespace PHARE
