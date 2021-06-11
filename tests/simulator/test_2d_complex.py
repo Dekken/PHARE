@@ -15,19 +15,19 @@ from pyphare.pharein import global_vars as gv
 import numpy as np
 
 diag_outputs="."
-time_step_nbr=10
-final_time=30.
+time_step_nbr=30000
 time_step=.001
+ppc=100
 
 def config():
 
     Simulation(
-        smallest_patch_size=20,
-        largest_patch_size=20,
+        smallest_patch_size=10,
+        # largest_patch_size=20,
         time_step_nbr=time_step_nbr,
         time_step=time_step,
         #boundary_types="periodic",
-        cells=(120, 60),
+        cells=(120, 120),
         dl=(0.2, 0.2),
         #refinement="tagging",
         #max_nbr_levels = 3,
@@ -112,7 +112,7 @@ def config():
     vvv = {
         "vbulkx": vx, "vbulky": vy, "vbulkz": vz,
         "vthx": vthx, "vthy": vthy, "vthz": vthz,
-        "nbr_part_per_cell":100, "init":{"seed":1234}
+        "nbr_part_per_cell":ppc, "init":{"seed":1234}
     }
 
     MaxwellianFluidModel(
@@ -122,11 +122,11 @@ def config():
 
     ElectronModel(closure="isothermal", Te=0.0)
 
+    from tests.diagnostic import timestamps_with_step, all_timestamps
     sim = ph.global_vars.sim
-    dt = 1*sim.time_step
-    nt = sim.final_time/dt+1
-    timestamps = dt * np.arange(nt)
-    print(timestamps)
+    timestamps = timestamps_with_step(sim, .01)
+    timestamps = all_timestamps(sim)
+    print(timestamps, sim.final_time)
 
     for quantity in ["E", "B"]:
         ElectromagDiagnostics(
@@ -142,36 +142,43 @@ def config():
             compute_timestamps=timestamps,
         )
 
-   for popname in ("protons",):
-      for name in ["domain", "levelGhost", "patchGhost"]:
-          ParticleDiagnostics(quantity=name,
+    for popname in ("protons",):
+       for name in ["domain", "levelGhost", "patchGhost"]:
+            ParticleDiagnostics(quantity=name,
                               compute_timestamps=timestamps,
                               write_timestamps=timestamps,
                               population_name=popname)
 
 
-def main():
+from pyphare.cpp import cpp_lib
+cpp = cpp_lib()
+from pyphare.pharesee.hierarchy import hierarchy_from
+from tests.simulator.test_advance import AdvanceTestBase
+test = AdvanceTestBase()
 
+def post_advance(new_time):
+    if cpp.mpi_rank() == 0:
+        print("Checking simulation time", new_time)
+        time     = "{:.10f}".format(new_time)
+        datahier = None
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", time=time, hier=datahier)
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", time=time, hier=datahier)
+        test.base_test_overlaped_fields_are_equal(datahier, time)
+
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_domain.h5")
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_levelGhost.h5", hier=datahier)
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_patchGhost.h5", hier=datahier)
+
+        from pyphare.pharesee.hierarchy import merge_particles
+        merge_particles(datahier)
+        # test.base_test_overlapped_particledatas_have_identical_particles(datahier, time)
+        test.base_test_L0_particle_number_conservation(datahier, time, ppc * np.array(gv.sim.cells).prod())
+
+
+def main():
     config()
     startMPI()
-    Simulator(gv.sim).run()
-
-    from pyphare.cpp import cpp_lib
-    cpp = cpp_lib()
-    if cpp.mpi_rank() == 0:
-        from datetime import datetime
-        from pyphare.pharesee.hierarchy import hierarchy_from
-        from tests.simulator.test_advance import AdvanceTestBase
-
-        test = AdvanceTestBase()
-        for time_step_idx in range(time_step_nbr + 1):
-            time     = "{:.10f}".format(time_step_idx * ph.global_vars.sim.time_step)
-            datahier = None
-            datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", time=time, hier=datahier)
-            datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", time=time, hier=datahier)
-            test.base_test_overlaped_fields_are_equal(datahier, time)
-            test.base_test_overlaped_fields_are_equal(datahier, time)
-
+    Simulator(gv.sim, post_advance=post_advance).run()
 
 if __name__=="__main__":
     main()

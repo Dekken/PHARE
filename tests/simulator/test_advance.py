@@ -328,6 +328,23 @@ class AdvanceTestBase(unittest.TestCase):
 
 
 
+    def base_test_L0_particle_number_conservation(self, datahier, coarsest_time, n_particles):
+        n_particles_at_t = 0
+        for patch in datahier.level(0, coarsest_time).patches:
+            print("patch.patch_datas.keys", list(patch.patch_datas.keys()), patch.box.shape)
+            n_particles_at_t += patch.patch_datas["protons_particles"].dataset[patch.box].size()
+        self.assertEqual(n_particles, n_particles_at_t)
+
+        patches = datahier.level(0, coarsest_time).patches
+        for patch_i, patch0 in enumerate(patches):
+            for patch1 in patches[patch_i:]:
+                assert patch0.box * patch1.box == None
+
+        fig = datahier.plot_2d_patches(0, [p.box for p in patches])
+        fig.savefig("base_test_L0_particle_number_conservation.png")
+
+
+
     def _test_L0_particle_number_conservation(self, ndim, ppc=100):
         cells=120
         time_step_nbr=10
@@ -341,10 +358,7 @@ class AdvanceTestBase(unittest.TestCase):
                                       nbr_part_per_cell=ppc, cells=cells, ndim=ndim)
             for time_step_idx in range(time_step_nbr + 1):
                 coarsest_time =  time_step_idx * time_step
-                n_particles_at_t = 0
-                for patch in datahier.level(0, coarsest_time).patches:
-                    n_particles_at_t += patch.patch_datas["protons_particles"].dataset[patch.box].size()
-                self.assertEqual(n_particles, n_particles_at_t)
+                self.base_test_L0_particle_number_conservation(datahier, coarsest_time, n_particles)
 
 
 
