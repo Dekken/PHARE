@@ -13,10 +13,22 @@
 #include "core/logger.h"
 #include "core/data/particles/particle.h"
 
+inline bool AreSame(std::array<double, 2> const& a, std::array<double, 2> const& b)
+{
+    bool r = 1;
+    for (std::size_t i = 0; i < 2; ++i)
+        r &= std::fabs(a[i] - b[i]) < 1e-12;
+    return r;
+}
+
 namespace PHARE
 {
 namespace core
 {
+    constexpr std::array<int, 2> icell{26, 26};
+    constexpr std::array<double, 2> delta{.953651153215986, .957282541829233};
+
+
     template<std::size_t dim, typename ParticleIterator, typename Electromag, typename Interpolator,
              typename BoundaryCondition, typename GridLayout>
     class BorisPusher : public Pusher<dim, ParticleIterator, Electromag, Interpolator,
@@ -83,8 +95,8 @@ namespace core
             // push the particles of half a step
             // rangeIn : t=n, rangeOut : t=n+1/2
             // get a pointer on the first particle of rangeOut that leaves the patch
-            auto firstLeaving
-                = pushStep_(rangeIn, rangeOut, particleIsNotLeaving, PushStep::PrePush);
+            auto firstLeaving = rangeOut.end();
+            pushStep_(rangeIn, rangeOut, particleIsNotLeaving, PushStep::PrePush);
 
             rangeOut = makeRange(rangeOut.begin(), std::move(firstLeaving));
 
@@ -123,6 +135,22 @@ namespace core
         template<typename ParticleIter>
         void advancePosition_(ParticleIter const& partIn, ParticleIter& partOut)
         {
+            if constexpr (dim == 2)
+            {
+                auto& p = partOut;
+                if (p.oiCell == icell and AreSame(p.odelta, delta))
+                {
+                    std::cout << "particle found" << std::endl;
+
+                    std::cout << __FILE__ << " " << __LINE__ << " " << Point{p.iCell}.str()
+                              << std::endl;
+                    std::cout << __FILE__ << " " << __LINE__ << " " << Point{p.delta}.str()
+                              << std::endl;
+                    std::cout << __FILE__ << " " << __LINE__ << " " << Point{p.v}.str()
+                              << std::endl;
+                }
+            }
+
             // push the particle
             for (std::size_t iDim = 0; iDim < dim; ++iDim)
             {
@@ -137,6 +165,22 @@ namespace core
                 partOut.delta[iDim] = delta - iCell;
                 partOut.iCell[iDim] = static_cast<int>(iCell + partIn.iCell[iDim]);
             }
+
+            if constexpr (dim == 2)
+            {
+                auto& p = partOut;
+                if (p.oiCell == icell and AreSame(p.odelta, delta))
+                {
+                    std::cout << "particle found" << std::endl;
+
+                    std::cout << __FILE__ << " " << __LINE__ << " " << Point{p.iCell}.str()
+                              << std::endl;
+                    std::cout << __FILE__ << " " << __LINE__ << " " << Point{p.delta}.str()
+                              << std::endl;
+                    std::cout << __FILE__ << " " << __LINE__ << " " << Point{p.v}.str()
+                              << std::endl;
+                }
+            }
         }
 
 
@@ -146,9 +190,9 @@ namespace core
          * @return the function returns and iterator on the first leaving particle, as
          * detected by the ParticleSelector
          */
+
         template<typename ParticleRangeIn, typename ParticleRangeOut>
-        auto pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut,
-                       ParticleSelector const& particleIsNotLeaving, PushStep step)
+        void pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut, PushStep step)
         {
             auto currentOut = rangeOut.begin();
             for (auto& currentIn : rangeIn)
@@ -174,6 +218,13 @@ namespace core
                 advancePosition_(currentIn, *currentOut);
                 currentOut++;
             }
+        }
+
+        template<typename ParticleRangeIn, typename ParticleRangeOut>
+        auto pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut,
+                       ParticleSelector const& particleIsNotLeaving, PushStep step)
+        {
+            pushStep_(rangeIn, rangeOut, step);
 
             // now all particles have been pushed
             // those not satisfying the predicate after the push

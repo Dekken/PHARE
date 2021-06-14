@@ -171,6 +171,8 @@ def load_time(time, datahier = None):
 
 def post_advance(new_time):
     import sys
+    import numpy as np
+    np.set_printoptions(precision=22)
     if cpp.mpi_rank() == 0:
         print("Checking simulation time", new_time)
         time     = "{:.10f}".format(new_time)
@@ -186,11 +188,12 @@ def post_advance(new_time):
                 print("time", time)
                 datahier = load_time(time)
                 for pidx, patch in enumerate(datahier.level(0, time).patches):
-                    particles = patch.patch_datas["protons_particles"].dataset[patch.box]
+                    particles = patch.patch_datas["protons_particles"].dataset
                     for i in range(particles.size()):
                         if particles.oiCells[i] + particles.odeltas[i] in r[1]:
-                            print("start:", pidx, particles.oiCells[i] + particles.odeltas[i])
-                            print("curr :", pidx, particles.iCells[i] + particles.deltas[i])
+                            print("patch", patch.box.lower)
+                            print("start:", pidx, particles.oiCells[i] + particles.odeltas[i], particles.iCells[i] in patch.box)
+                            print("curr :", pidx, particles.iCells[i] + particles.deltas[i], particles.v[i])
             print("exit")
             sys.exit(1)
 
@@ -200,6 +203,8 @@ def main():
     config()
     startMPI()
     Simulator(gv.sim, post_advance=post_advance).run()
+#     for i in range(5, 6):
+#         post_advance(time_step * i)
 
 if __name__=="__main__":
     main()
