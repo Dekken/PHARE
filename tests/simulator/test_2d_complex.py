@@ -185,12 +185,12 @@ def post_advance(new_time):
                 time     = "{:.10f}".format(time_step * i)
                 print("time", time)
                 datahier = load_time(time)
-                for patch in datahier.level(0, time).patches:
+                for pidx, patch in enumerate(datahier.level(0, time).patches):
                     particles = patch.patch_datas["protons_particles"].dataset[patch.box]
                     for i in range(particles.size()):
                         if particles.oiCells[i] + particles.odeltas[i] in r[1]:
-                            print("0", particles.oiCells[i] + particles.odeltas[i])
-                            print("1", particles.iCells[i] + particles.deltas[i])
+                            print("start:", pidx, particles.oiCells[i] + particles.odeltas[i])
+                            print("curr :", pidx, particles.iCells[i] + particles.deltas[i])
             print("exit")
             sys.exit(1)
 
