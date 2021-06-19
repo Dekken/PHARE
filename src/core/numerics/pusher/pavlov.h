@@ -112,17 +112,13 @@ public:
     {
         advancePosition_(particle);
 
-        if (particleIsNotLeaving(particle))
-        {
-            interpolator.meshToParticle(particle, emFields, layout);
+        interpolator.meshToParticle(particle, emFields, layout);
 
-            accelerate_(particle);
+        accelerate_(particle);
 
-            advancePosition_(particle);
+        advancePosition_(particle);
 
-            return particleIsNotLeaving(particle);
-        }
-        return false;
+        return particleIsNotLeaving(particle);
     }
 
 
@@ -135,7 +131,8 @@ public:
 
         accelerate_setup(mass);
 
-        std::vector<bool> particlesAreNotLeaving(range.size(), false);
+        std::vector<bool> particlesAreNotLeaving_(range.size(), false);
+        auto* particlesAreNotLeaving = particlesAreNotLeaving_.data(); //
 
 #pragma acc kernels
 #pragma acc loop
@@ -202,13 +199,20 @@ private:
      * detected by the ParticleSelector
      */
     template<typename ParticleRangeIn, typename ParticleRangeOut>
-    auto pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut,
-                   ParticleSelector const& particleIsNotLeaving, PushStep step)
+    void pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut, PushStep step)
     {
         auto currentOut = rangeOut.begin();
-
         for (auto& currentIn : rangeIn)
         {
+            // in the first push, this is the first time
+            // we push to rangeOut, which contains crap
+            // the push will only touch the particle position
+            // but the next step being the acceleration of
+            // rangeOut, we need to copy rangeIn weights, charge
+            // and velocity. This is done here although
+            // not strictly speaking this function's business
+            // to take advantage that we're already looping
+            // over rangeIn particles.
             if (step == PushStep::PrePush)
             {
                 currentOut->charge = currentIn.charge;
@@ -219,6 +223,13 @@ private:
             advancePosition_(currentIn, *currentOut);
             currentOut++;
         }
+    }
+
+    template<typename ParticleRangeIn, typename ParticleRangeOut>
+    auto pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut,
+                   ParticleSelector const& particleIsNotLeaving, PushStep step)
+    {
+        pushStep_(rangeIn, rangeOut, step);
 
         // now all particles have been pushed
         // those not satisfying the predicate after the push

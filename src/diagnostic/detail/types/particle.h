@@ -101,9 +101,8 @@ void ParticlesDiagnosticWriter<H5Writer>::getDataSetInfo(DiagnosticProperties& d
 
     auto particleInfo = [&](auto& attr, auto& particles) {
         std::size_t part_idx = 0;
-        auto const& keys     = packer_keys_;
         core::apply(Packer::empty(), [&](auto const& arg) {
-            attr[Packer::keys()[part_idx]] = getSize(arg, particles.size());
+            attr[packer_keys_[part_idx]] = getSize(arg, particles.size());
             ++part_idx;
         });
     };
@@ -154,8 +153,7 @@ void ParticlesDiagnosticWriter<H5Writer>::initDataSets(
         std::string path{h5Writer_.getPatchPathAddTimestamp(lvl, patchID) + "/"};
         std::size_t part_idx = 0;
         core::apply(Packer::empty(), [&](auto const& arg) {
-            createDataSet(path + Packer::keys()[part_idx], attr, Packer::keys()[part_idx], arg,
-                          null);
+            createDataSet(path + packer_keys_[part_idx], attr, packer_keys_[part_idx], arg, null);
             ++part_idx;
         });
         this->writeGhostsAttr_(h5file, path, amr::ghostWidthForParticles<interpOrder>(), null);
@@ -194,25 +192,11 @@ void ParticlesDiagnosticWriter<H5Writer>::write(DiagnosticProperties& diagnostic
         core::ContiguousParticles<dimension> copy{particles.size()};
         packer.pack(copy);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-        h5file.template write_data_set_flat<2>(path + packer.keys()[0], copy.weight.data());
-        h5file.template write_data_set_flat<2>(path + packer.keys()[1], copy.charge.data());
-        h5file.template write_data_set_flat<2>(path + packer.keys()[2], copy.iCell.data());
-        h5file.template write_data_set_flat<2>(path + packer.keys()[3], copy.delta.data());
-        h5file.template write_data_set_flat<2>(path + packer.keys()[4], copy.v.data());
-=======
-        auto keys = core::packer_keys();
-=======
-        auto const& keys = packer_keys_;
->>>>>>> fcd20eb (comments/cleanup)
-        h5Writer.writeDataSet(h5file, path + keys[0], copy.weight.data());
-        h5Writer.writeDataSet(h5file, path + keys[1], copy.charge.data());
-        h5Writer.writeDataSet(h5file, path + keys[2], copy.iCell.data());
-        h5Writer.writeDataSet(h5file, path + keys[3], copy.delta.data());
-        h5Writer.writeDataSet(h5file, path + keys[4], copy.v.data());
->>>>>>> 8fa6529 (PGI C++ compiling/test passing)
+        h5file.template write_data_set_flat<2>(path + packer_keys_[0], copy.weight.data());
+        h5file.template write_data_set_flat<2>(path + packer_keys_[1], copy.charge.data());
+        h5file.template write_data_set_flat<2>(path + packer_keys_[2], copy.iCell.data());
+        h5file.template write_data_set_flat<2>(path + packer_keys_[3], copy.delta.data());
+        h5file.template write_data_set_flat<2>(path + packer_keys_[4], copy.v.data());
     };
 
     auto checkWrite = [&](auto& tree, auto pType, auto& ps) {
