@@ -58,7 +58,7 @@ public:
     }
 
     void updatePopulations(Ions& ions, Electromag const& em, GridLayout const& layout, double dt,
-                           UpdaterMode = UpdaterMode::particles_and_moments);
+                           UpdaterMode = UpdaterMode::all);
 
 
     void updateIons(Ions& ions, GridLayout const& layout);
@@ -70,9 +70,9 @@ private:
                                                  BoundaryCondition, GridLayout>;
 
 
-    void updateMomentsOnly_(Ions& ions, Electromag const& em, GridLayout const& layout);
+    void updateAndDepositDomain_(Ions& ions, Electromag const& em, GridLayout const& layout);
 
-    void updateAll_(Ions& ions, Electromag const& em, GridLayout const& layout);
+    void updateAndDepositAll_(Ions& ions, Electromag const& em, GridLayout const& layout);
 
     std::size_t pusher_threads_ = 1;
     std::unique_ptr<Pusher> pusher_;
@@ -91,13 +91,13 @@ void LOL_IonUpdater<Ions, Electromag, GridLayout>::updatePopulations(Ions& ions,
     resetMoments(ions);
     pusher_->setMeshAndTimeStep(layout.meshSize(), dt);
 
-    if (mode == UpdaterMode::moments_only)
+    if (mode == UpdaterMode::domain_only)
     {
-        updateMomentsOnly_(ions, em, layout);
+        updateAndDepositDomain_(ions, em, layout);
     }
     else
     {
-        updateAll_(ions, em, layout);
+        updateAndDepositAll_(ions, em, layout);
     }
 }
 
@@ -115,12 +115,12 @@ void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateIons(Ions& ions, GridLa
 
 template<typename Ions, typename Electromag, typename GridLayout>
 /**
- * @brief LOL_IonUpdater<Ions, Electromag, GridLayout>::updateMomentsOnly_
+ * @brief LOL_IonUpdater<Ions, Electromag, GridLayout>::updateAndDepositDomain_
    evolves moments from time n to n+1 without updating particles, which stay at time n
  */
-void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateMomentsOnly_(Ions& ions,
-                                                                      Electromag const& em,
-                                                                      GridLayout const& layout)
+void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateAndDepositDomain_(Ions& ions,
+                                                                           Electromag const& em,
+                                                                           GridLayout const& layout)
 {
     auto domainBox = layout.AMRBox();
 
@@ -180,11 +180,12 @@ void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateMomentsOnly_(Ions& ions
 
 template<typename Ions, typename Electromag, typename GridLayout>
 /**
- * @brief LOL_IonUpdater<Ions, Electromag, GridLayout>::updateMomentsOnly_
+ * @brief LOL_IonUpdater<Ions, Electromag, GridLayout>::updateAndDepositDomain_
    evolves moments and particles from time n to n+1
  */
-void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateAll_(Ions& ions, Electromag const& em,
-                                                              GridLayout const& layout)
+void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateAndDepositAll_(Ions& ions,
+                                                                        Electromag const& em,
+                                                                        GridLayout const& layout)
 {
     auto constexpr partGhostWidth = GridLayout::ghostWidthForParticles();
     auto domainBox                = layout.AMRBox();

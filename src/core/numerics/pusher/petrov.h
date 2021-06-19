@@ -74,10 +74,9 @@ public:
 
         // push the particles of half a step
         // rangeIn : t=n, rangeOut : t=n+1/2
-        // get a pointer on the first particle of rangeOut that leaves the patch
-        auto firstLeaving = pushStep_(rangeIn, rangeOut, particleIsNotLeaving, PushStep::PrePush);
-
-        rangeOut = makeRange(rangeOut.begin(), std::move(firstLeaving));
+        // Do not partition on this step - this is to keep all domain and ghost
+        //   particles consistent. see: https://github.com/PHAREHUB/PHARE/issues/571
+        pushStep_(rangeIn, rangeOut, PushStep::PrePush);
 
         // get electromagnetic fields interpolated on the particles of rangeOut
         // stop at newEnd.
@@ -88,7 +87,7 @@ public:
 
         // now advance the particles from t=n+1/2 to t=n+1 using v_{n+1} just calculated
         // and get a pointer to the first leaving particle
-        firstLeaving = pushStep_(rangeOut, rangeOut, particleIsNotLeaving, PushStep::PostPush);
+        auto firstLeaving = pushStep_(rangeOut, rangeOut, particleIsNotLeaving, PushStep::PostPush);
 
         rangeOut = makeRange(rangeOut.begin(), std::move(firstLeaving));
 
@@ -145,24 +144,37 @@ private:
      * detected by the ParticleSelector
      */
     template<typename ParticleRangeIn, typename ParticleRangeOut>
-    auto pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut,
-                   ParticleSelector const& particleIsNotLeaving, PushStep step)
+    void pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut, PushStep step)
     {
         auto currentOut = rangeOut.begin();
-
         for (auto& currentIn : rangeIn)
         {
+            // in the first push, this is the first time
+            // we push to rangeOut, which contains crap
+            // the push will only touch the particle position
+            // but the next step being the acceleration of
+            // rangeOut, we need to copy rangeIn weights, charge
+            // and velocity. This is done here although
+            // not strictly speaking this function's business
+            // to take advantage that we're already looping
+            // over rangeIn particles.
             if (step == PushStep::PrePush)
             {
                 currentOut->charge = currentIn.charge;
                 currentOut->weight = currentIn.weight;
-                for (std::size_t i = 0; i < 3; ++i)
-                    currentOut->v[i] = currentIn.v[i];
+                currentOut->v      = currentIn.v;
             }
             // push the particle
             advancePosition_(currentIn, *currentOut);
             currentOut++;
         }
+    }
+
+    template<typename ParticleRangeIn, typename ParticleRangeOut>
+    auto pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut,
+                   ParticleSelector const& particleIsNotLeaving, PushStep step)
+    {
+        pushStep_(rangeIn, rangeOut, step);
 
         // now all particles have been pushed
         // those not satisfying the predicate after the push

@@ -8,7 +8,7 @@
 #include "boris.h"
 #include "kirov.h"
 #include "petrov.h"
-#include "pavlov.h"
+// #include "pavlov.h"
 #include "pusher.h"
 
 namespace PHARE
@@ -43,12 +43,13 @@ namespace core
                                  GridLayout>>();
             }
 
-            if (pusherName == "pavlov")
-            {
-                return std::make_unique<
-                    PavlovPusher<dim, ParticleIterator, Electromag, Interpolator, BoundaryCondition,
-                                 GridLayout>>();
-            }
+            // if (pusherName == "pavlov")
+            // {
+            //     return std::make_unique<
+            //         PavlovPusher<dim, ParticleIterator, Electromag, Interpolator,
+            //         BoundaryCondition,
+            //                      GridLayout>>();
+            // }
 
             throw std::runtime_error("Error : Invalid Pusher name");
         }
