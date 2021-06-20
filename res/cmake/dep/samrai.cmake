@@ -24,6 +24,7 @@ if (NOT SAMRAI_FOUND)
     endif()
 
     option(ENABLE_TESTS "Enable Samrai Test" OFF ) # disable SAMRAI Test so that we can use the googletest pulled after
+    option(ENABLE_SAMRAI_TESTS "Enable Samrai Test" OFF ) # disable SAMRAI Test so that we can use the googletest pulled after
 
     add_subdirectory(${SAMRAI_SRCDIR})
     unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY CACHE) # undoes what samrai does, so ctest can continue to work
