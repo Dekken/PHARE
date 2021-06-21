@@ -16,8 +16,6 @@ mpl.use('Agg')
 diag_outputs="."
 time_step_nbr=30000
 final_time=30.
-ppc=100
-cells=[100, 60]
 
 def config():
 
@@ -27,7 +25,7 @@ def config():
         time_step_nbr=30000,
         final_time=30.,
         #boundary_types="periodic",
-        cells=cells,
+        cells=(100, 60),
         dl=(0.20, 0.2),
         #refinement="tagging",
         #max_nbr_levels = 3,
@@ -123,7 +121,7 @@ def config():
     vvv = {
         "vbulkx": vx, "vbulky": vy, "vbulkz": vz,
         "vthx": vthx, "vthy": vthy, "vthz": vthz,
-        "nbr_part_per_cell": ppc
+        "nbr_part_per_cell":100
     }
 
     MaxwellianFluidModel(
@@ -175,31 +173,34 @@ def post_advance(new_time):
         from tests.simulator.test_advance import AdvanceTestBase
         test = AdvanceTestBase()
 
-        time = "{:.10f}".format(new_time)
-
         print("opening diags")
         from pyphare.pharesee.hierarchy import hierarchy_from
         now = datetime.now()
         datahier = None
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", time=time, hier=datahier)
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", time=time, hier=datahier)
-
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_domain.h5", time=time, hier=datahier)
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_levelGhost.h5", time=time, hier=datahier)
-        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_patchGhost.h5", time=time, hier=datahier)
-        from pyphare.pharesee.hierarchy import merge_particles
-        merge_particles(datahier)
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", hier=datahier)
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", hier=datahier)
         print("diags opened in", datetime.now() - now)
+        test.base_test_overlaped_fields_are_equal(datahier, time_step_nbr, ph.global_vars.sim.time_step)
 
-        test.base_test_overlaped_fields_are_equal(datahier, new_time)
-        test.base_test_overlapped_particledatas_have_identical_particles(datahier, new_time)
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_domain.h5", hier=datahier)
+        # datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_levelGhost.h5", hier=datahier)
+        # datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_patchGhost.h5", hier=datahier)
+        from pyphare.pharesee.hierarchy import merge_particles
+        # merge_particles(datahier)
 
-        n_particles = np.array(cells).prod() * ppc
+        n_particles = 100 * 60 * 100
+
+        coarsest_time = new_time
+        print("coarsest_time", coarsest_time)
+
         n_particles_at_t = 0
-        for patch in datahier.level(0, new_time).patches:
+
+        # if not datahier.has_time(coarsest_time): continue
+
+        for patch in datahier.level(0, coarsest_time).patches:
             n_particles_at_t += patch.patch_datas["protons_particles"].dataset[patch.box].size()
         test.assertEqual(n_particles, n_particles_at_t)
-        print("coarsest_time", new_time, n_particles_at_t)
+        print("coarsest_time", coarsest_time, n_particles_at_t)
 
 
 def main():

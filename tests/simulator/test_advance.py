@@ -208,75 +208,105 @@ class AdvanceTestBase(unittest.TestCase):
 
 
 
-    def base_test_overlaped_fields_are_equal(self, datahier, time_step_nbr, time_step):
+    def base_test_overlaped_fields_are_equal(self, datahier, coarsest_time):
         checks = 0
 
-        for time_step_idx in range(time_step_nbr + 1):
-            coarsest_time =  time_step_idx * time_step
-            print("coarsest_time in? ", coarsest_time)
-            if not datahier.has_time(coarsest_time):
-                continue
-            print("coarsest_time in!", coarsest_time, checks)
-            for ilvl, overlaps in hierarchy_overlaps(datahier, coarsest_time).items():
+        for ilvl, overlaps in hierarchy_overlaps(datahier, coarsest_time).items():
 
-                for overlap in overlaps:
+            for overlap in overlaps:
 
-                    pd1, pd2 = overlap["pdatas"]
-                    box      = overlap["box"]
-                    offsets  = overlap["offset"]
+                pd1, pd2 = overlap["pdatas"]
+                box      = overlap["box"]
+                offsets  = overlap["offset"]
 
-                    self.assertEqual(pd1.quantity, pd2.quantity)
+                self.assertEqual(pd1.quantity, pd2.quantity)
 
-                    if pd1.quantity == 'field':
-                        checks += 1
+                if pd1.quantity == 'field':
+                    checks += 1
 
-                        # we need to transform the AMR overlap box, which is thus
-                        # (because AMR) common to both pd1 and pd2 into local index
-                        # boxes that will allow to slice the data
+                    # we need to transform the AMR overlap box, which is thus
+                    # (because AMR) common to both pd1 and pd2 into local index
+                    # boxes that will allow to slice the data
 
-                        # the patchData ghost box that serves as a reference box
-                        # to transfrom AMR to local indexes first needs to be
-                        # shifted by the overlap offset associated to it
-                        # this is because the overlap box has been calculated from
-                        # the intersection of possibly shifted patch data ghost boxes
+                    # the patchData ghost box that serves as a reference box
+                    # to transfrom AMR to local indexes first needs to be
+                    # shifted by the overlap offset associated to it
+                    # this is because the overlap box has been calculated from
+                    # the intersection of possibly shifted patch data ghost boxes
 
-                        loc_b1 = boxm.amr_to_local(box, boxm.shift(pd1.ghost_box, offsets[0]))
-                        loc_b2 = boxm.amr_to_local(box, boxm.shift(pd2.ghost_box, offsets[1]))
+                    loc_b1 = boxm.amr_to_local(box, boxm.shift(pd1.ghost_box, offsets[0]))
+                    loc_b2 = boxm.amr_to_local(box, boxm.shift(pd2.ghost_box, offsets[1]))
 
-                        data1 = pd1.dataset[:].reshape(pd1.ghost_box.shape + pd1.primal_directions())
-                        data2 = pd2.dataset[:].reshape(pd2.ghost_box.shape + pd2.primal_directions())
+                    data1 = pd1.dataset[:].reshape(pd1.ghost_box.shape + pd1.primal_directions())
+                    data2 = pd2.dataset[:].reshape(pd2.ghost_box.shape + pd2.primal_directions())
 
-                        if box.ndim == 1:
-                            slice1 = data1[loc_b1.lower[0]:loc_b1.upper[0] + 1]
-                            slice2 = data2[loc_b2.lower[0]:loc_b2.upper[0] + 1]
+                    if box.ndim == 1:
+                        slice1 = data1[loc_b1.lower[0]:loc_b1.upper[0] + 1]
+                        slice2 = data2[loc_b2.lower[0]:loc_b2.upper[0] + 1]
 
-                        if box.ndim == 2:
-                            slice1 = data1[loc_b1.lower[0]:loc_b1.upper[0] + 1, loc_b1.lower[1]:loc_b1.upper[1] + 1]
-                            slice2 = data2[loc_b2.lower[0]:loc_b2.upper[0] + 1, loc_b2.lower[1]:loc_b2.upper[1] + 1]
+                    if box.ndim == 2:
+                        slice1 = data1[loc_b1.lower[0]:loc_b1.upper[0] + 1, loc_b1.lower[1]:loc_b1.upper[1] + 1]
+                        slice2 = data2[loc_b2.lower[0]:loc_b2.upper[0] + 1, loc_b2.lower[1]:loc_b2.upper[1] + 1]
 
-                        try:
-                            # np.testing.assert_equal(slice1, slice2)
-                            np.testing.assert_allclose(slice1, slice2, atol=1e-16)
-                        except AssertionError as e:
-                            print("error", time_step_idx, coarsest_time, overlap, e)
-                            raise e
+                    try:
+                        # np.testing.assert_equal(slice1, slice2)
+                        np.testing.assert_allclose(slice1, slice2, atol=1e-16)
+                    except AssertionError as e:
+                        print("error", time_step_idx, coarsest_time, overlap, e)
+                        raise e
         return checks
 
 
     def _test_overlaped_fields_are_equal(self, datahier, time_step_nbr, time_step):
         if cpp.mpi_rank() > 0: return
-        checks = self.base_test_overlaped_fields_are_equal(datahier, time_step_nbr, time_step)
+        checks = 0
+
+        for time_step_idx in range(time_step_nbr + 1):
+            coarsest_time =  time_step_idx * time_step
+            checks += self.base_test_overlaped_fields_are_equal(datahier, coarsest_time)
+
         self.assertGreater(check, time_step_nbr)
         self.assertEqual(check % time_step_nbr, 0)
 
 
 
 
+    def base_test_overlapped_particledatas_have_identical_particles(self, datahier, coarsest_time):
+        from copy import copy
+
+        overlaps = hierarchy_overlaps(datahier, coarsest_time)
+
+        for ilvl, lvl in datahier.patch_levels.items():
+
+            print("testing level {}".format(ilvl))
+            for overlap in overlaps[ilvl]:
+                pd1, pd2 = overlap["pdatas"]
+                box      = overlap["box"]
+                offsets  = overlap["offset"]
+
+                self.assertEqual(pd1.quantity, pd2.quantity)
+
+                if "particles" in pd1.quantity:
+
+                    # the following uses 'offset', we need to remember that offset
+                    # is the quantity by which a patch has been moved to detect
+                    # overlap with the other one.
+                    # so shift by +offset when evaluating patch data in overlap box
+                    # index space, and by -offset when we want to shift box indexes
+                    # to the associated patch index space.
+
+                    # overlap box must be shifted by -offset to select data in the patches
+                    part1 = copy(pd1.dataset.select(boxm.shift(box, -np.asarray(offsets[0]))))
+                    part2 = copy(pd2.dataset.select(boxm.shift(box, -np.asarray(offsets[1]))))
+
+                    # periodic icell overlaps need shifting to be the same
+                    part1.iCells = part1.iCells + offsets[0]
+                    part2.iCells = part2.iCells + offsets[1]
+                    self.assertEqual(part1, part2)
 
 
     def _test_overlapped_particledatas_have_identical_particles(self, ndim, interp_order, refinement_boxes, ppc=100, **kwargs):
         print("test_overlapped_particledatas_have_identical_particles, interporder : {}".format(interp_order))
-        from copy import copy
 
         time_step_nbr=3
         time_step=0.001
@@ -285,37 +315,7 @@ class AdvanceTestBase(unittest.TestCase):
                                       time_step=time_step, time_step_nbr=time_step_nbr, nbr_part_per_cell=ppc, **kwargs)
 
         for time_step_idx in range(time_step_nbr + 1):
-            coarsest_time =  time_step_idx * time_step
-
-            overlaps = hierarchy_overlaps(datahier, coarsest_time)
-
-            for ilvl, lvl in datahier.patch_levels.items():
-
-                print("testing level {}".format(ilvl))
-                for overlap in overlaps[ilvl]:
-                    pd1, pd2 = overlap["pdatas"]
-                    box      = overlap["box"]
-                    offsets  = overlap["offset"]
-
-                    self.assertEqual(pd1.quantity, pd2.quantity)
-
-                    if "particles" in pd1.quantity:
-
-                        # the following uses 'offset', we need to remember that offset
-                        # is the quantity by which a patch has been moved to detect
-                        # overlap with the other one.
-                        # so shift by +offset when evaluating patch data in overlap box
-                        # index space, and by -offset when we want to shift box indexes
-                        # to the associated patch index space.
-
-                        # overlap box must be shifted by -offset to select data in the patches
-                        part1 = copy(pd1.dataset.select(boxm.shift(box, -np.asarray(offsets[0]))))
-                        part2 = copy(pd2.dataset.select(boxm.shift(box, -np.asarray(offsets[1]))))
-
-                        # periodic icell overlaps need shifting to be the same
-                        part1.iCells = part1.iCells + offsets[0]
-                        part2.iCells = part2.iCells + offsets[1]
-                        self.assertEqual(part1, part2)
+            self.base_test_overlapped_particledatas_have_identical_particles(datahier, time_step_idx * time_step)
 
 
     def _test_L0_particle_number_conservation(self, ndim, ppc=100):
