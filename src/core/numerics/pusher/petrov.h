@@ -202,7 +202,7 @@ private:
         // PGI cannot parallelize loops where upperbound is a class member
         std::size_t const nParticles = inputParticles.size();
 
-#pragma acc parallel loop
+        //
         for (std::size_t i = 0; i < nParticles; ++i)
         {
             auto const& currentIn = currentInP[i];

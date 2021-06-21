@@ -623,7 +623,7 @@ namespace core
          */
         template<typename Particle_t, typename VecField, typename GridLayout, typename Field>
         void particleToMesh(Particle_t const& particle, Field& density, VecField& flux,
-                            GridLayout const& layout, double coef)
+                            GridLayout const& layout, double coef = 1.)
         {
             auto constexpr densityCentering = GridLayout::centering(HybridQuantity::Scalar::rho);
             auto constexpr fluxCentering    = GridLayout::centering(HybridQuantity::Vector::V);

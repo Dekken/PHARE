@@ -7,6 +7,7 @@
 #include "amr/solvers/solver.h"
 #include "amr/solvers/solver_mhd.h"
 #include "amr/solvers/solver_ppc.h"
+#include "amr/solvers/solver_lol.h"
 #include "amr/level_initializer/level_initializer.h"
 #include "amr/level_initializer/level_initializer_factory.h"
 #include "amr/multiphysics_integrator.h"
@@ -36,7 +37,7 @@ struct PHARE_Types
     using HybridModel_t  = PHARE::solver::HybridModel<GridLayout_t, Electromag_t, Ions_t,
                                                      Electrons_t, PHARE::amr::SAMRAI_Types>;
     using MHDModel_t  = PHARE::solver::MHDModel<GridLayout_t, VecField_t, PHARE::amr::SAMRAI_Types>;
-    using SolverPPC_t = PHARE::solver::SolverPPC<HybridModel_t, PHARE::amr::SAMRAI_Types>;
+    using SolverPPC_t = PHARE::solver::SolverLOL<HybridModel_t, PHARE::amr::SAMRAI_Types>;
     using SolverMHD_t = PHARE::solver::SolverMHD<MHDModel_t, PHARE::amr::SAMRAI_Types>;
     using LevelInitializerFactory_t = PHARE::solver::LevelInitializerFactory<HybridModel_t>;
 

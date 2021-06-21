@@ -39,8 +39,8 @@ public:
     using ParticleArray     = typename Ions::particle_array_type;
     using PartIterator      = typename ParticleArray::iterator;
     using BoundaryCondition = PHARE::core::BoundaryCondition<dimension, interp_order>;
-    using Pusher            = PHARE::core::Pusher<dimension, PartIterator, Electromag, Interpolator,
-                                       BoundaryCondition, GridLayout>;
+    using Pusher = PHARE::core::KirovPusher<dimension, PartIterator, Electromag, Interpolator,
+                                            BoundaryCondition, GridLayout>;
 
     static std::size_t get_threads(PHARE::initializer::PHAREDict const& dict)
     {
@@ -111,6 +111,45 @@ void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateIons(Ions& ions, GridLa
     ions.computeBulkVelocity();
 }
 
+template<std::size_t dim>
+class InDomainBox
+{
+public:
+    InDomainBox(Box<int, dim> const& domainBox)
+        : _domainBox{domainBox}
+    {
+    }
+    template<typename Particle>
+    auto operator()(Particle const& part)
+    {
+        return core::isIn(cellAsPoint(part), _domainBox);
+    }
+
+private:
+    Box<int, dim> const& _domainBox;
+};
+
+
+template<std::size_t dim>
+class InGhostLayerBox
+{
+public:
+    InGhostLayerBox(Box<int, dim> const& domainBox, Box<int, dim> const& ghostBox)
+        : _domainBox{domainBox}
+        , _ghostBox{ghostBox}
+    {
+    }
+    template<typename Particle>
+    auto operator()(Particle const& part)
+    {
+        auto cell = cellAsPoint(part);
+        return core::isIn(cell, _ghostBox) and !core::isIn(cell, _domainBox);
+    }
+
+private:
+    Box<int, dim> const &_domainBox, _ghostBox;
+};
+
 
 
 template<typename Ions, typename Electromag, typename GridLayout>
@@ -124,37 +163,33 @@ void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateAndDepositDomain_(Ions&
 {
     auto domainBox = layout.AMRBox();
 
-    auto inDomainBox = [&domainBox](auto const& part) {
-        auto cell = cellAsPoint(part);
-        return core::isIn(cell, domainBox);
-    };
+    InDomainBox<dimension> inDomainBox{domainBox};
 
     auto constexpr partGhostWidth = GridLayout::ghostWidthForParticles();
     auto ghostBox{domainBox};
     ghostBox.grow(partGhostWidth);
 
-    auto ghostSelector = [&ghostBox, &domainBox](auto const& part) {
-        auto cell = cellAsPoint(part);
-        return core::isIn(cell, ghostBox) and !core::isIn(cell, domainBox);
-    };
+    InGhostLayerBox<dimension> ghostSelector{domainBox, ghostBox};
 
 
     for (auto& pop : ions)
     {
-        // first push all domain particles
-        // push them while still inDomainBox
+        // first push all domain particles push them while still inDomainBox
         // accumulate those inDomainBox
 
+#pragma acc parallel loop
+        for (auto& part : pop.domainParticles())
         {
-            auto copy  = pop.domainParticles();
-            auto range = makeRange(copy);
+            auto newEnd = pusher_->move_in_place(part, em, pop.mass(), interpolator_, layout);
 
-            auto newEnd = pusher_->move(range, em, pop.mass(), interpolator_, inDomainBox, layout);
-
-            interpolator_(std::begin(copy), newEnd, pop.density(), pop.flux(), layout);
+            if (inDomainBox(part))
+                interpolator_.particleToMesh(part, pop.density(), pop.flux(), layout);
         }
+    }
 
 
+    for (auto& pop : ions)
+    {
         // then push patch and level ghost particles
         // push those in the ghostArea (i.e. stop pushing if they're not out of it)
         // some will leave the ghost area
@@ -192,14 +227,8 @@ void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateAndDepositAll_(Ions& io
     auto ghostBox{domainBox};
     ghostBox.grow(partGhostWidth);
 
-    auto ghostSelector = [&ghostBox, &domainBox](auto const& part) {
-        auto cell = cellAsPoint(part);
-        return core::isIn(cell, ghostBox) and !core::isIn(cell, domainBox);
-    };
-
-    auto inDomainSelector
-        = [&domainBox](auto const& part) { return core::isIn(cellAsPoint(part), domainBox); };
-
+    InDomainBox<dimension> inDomainSelector{domainBox};
+    InGhostLayerBox<dimension> ghostSelector{domainBox, ghostBox};
 
     // push domain particles, erase from array those leaving domain
     // push patch and level ghost particles that are in ghost area (==ghost box without domain)
@@ -218,22 +247,23 @@ void LOL_IonUpdater<Ions, Electromag, GridLayout>::updateAndDepositAll_(Ions& io
 
         domainParticles.erase(firstOutside, std::end(domainParticles));
 
+        /*
+                auto pushAndCopyInDomain = [&](auto& particleArray) {
+                    auto range = makeRange(particleArray);
 
-        auto pushAndCopyInDomain = [&](auto& particleArray) {
-            auto range = makeRange(particleArray);
+                    auto firstOutGhostBox
+                        = pusher_->move(range, em, pop.mass(), interpolator_, ghostSelector,
+           layout);
 
-            auto firstOutGhostBox
-                = pusher_->move(range, em, pop.mass(), interpolator_, ghostSelector, layout);
+                    std::copy_if(firstOutGhostBox, std::end(particleArray),
+                                 std::back_inserter(domainParticles), inDomainSelector);
 
-            std::copy_if(firstOutGhostBox, std::end(particleArray),
-                         std::back_inserter(domainParticles), inDomainSelector);
-
-            particleArray.erase(firstOutGhostBox, std::end(particleArray));
-        };
+                    particleArray.erase(firstOutGhostBox, std::end(particleArray));
+                };*/
 
 
-        pushAndCopyInDomain(pop.patchGhostParticles());
-        pushAndCopyInDomain(pop.levelGhostParticles());
+        // pushAndCopyInDomain(pop.patchGhostParticles());
+        // pushAndCopyInDomain(pop.levelGhostParticles());
 
         interpolator_(std::begin(domainParticles), std::end(domainParticles), pop.density(),
                       pop.flux(), layout);
