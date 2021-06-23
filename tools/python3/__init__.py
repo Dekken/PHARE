@@ -32,8 +32,12 @@ def run_mp(cmds, N_CORES=None, **kwargs):
         for future in concurrent.futures.as_completed(jobs):
             try:
                 results += [future.result()]
+                if future.exception() is not None:
+                    raise future.exception()
             except Exception as exc:
                 print("run_mp generated an exception: %s" % exc)
+                if kwargs.get("check", False):
+                    raise exc
         return results
 
 
