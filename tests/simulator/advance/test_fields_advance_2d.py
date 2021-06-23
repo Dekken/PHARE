@@ -70,9 +70,9 @@ class AdvanceTest(AdvanceTestBase):
 
 
     @data( # only supports a hierarchy with 2 levels
+        # refinement boxes cannot be near the edge of a coarser domain box boundary
        *per_interp(({"L0": [Box2D(5, 9)]})),
-       *per_interp(({"L0": [Box2D(5, 19), Box2D(20, 24)]})),
-       *per_interp(({"L0": [Box2D(5, 9), Box2D(20, 24)]})),
+       *per_interp(({"L0": [Box2D(20, 24)]})),
     )
     @unpack
     def test_field_level_ghosts_via_subcycles_and_coarser_interpolation(self, interp_order, refinement_boxes):

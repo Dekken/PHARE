@@ -417,13 +417,6 @@ class AdvanceTestBase(unittest.TestCase):
 
           The simulations are no longer comparable after the first advance, so this test cannot work beyond that.
         """
-
-        from pyphare.simulator.simulator import startMPI
-        startMPI()
-        if cpp.mpi_size() > 1:
-            # this test cannot handle being run under MPI
-            return
-
         print("test_field_coarsening_via_subcycles for dim/interp : {}/{}".format(ndim, interp_order))
 
         from tests.amr.data.field.refine.test_refine_field import refine_time_interpolate
@@ -434,7 +427,7 @@ class AdvanceTestBase(unittest.TestCase):
 
         def _getHier(diag_dir, boxes=[]):
             return self.getHierarchy(interp_order, boxes, "eb", cells=30,
-                time_step_nbr=1, smallest_patch_size=5, largest_patch_size=30,
+                time_step_nbr=1, smallest_patch_size=5, largest_patch_size=15,
                 diag_outputs=diag_dir, extra_diag_options={"fine_dump_lvl_max": 10}, time_step=0.001,
                 model_init={"seed": rando}, ndim=ndim
             )
