@@ -418,6 +418,12 @@ class AdvanceTestBase(unittest.TestCase):
           The simulations are no longer comparable after the first advance, so this test cannot work beyond that.
         """
 
+        from pyphare.simulator.simulator import startMPI
+        startMPI()
+        if cpp.mpi_size() > 1:
+            # this test cannot handle being run under MPI
+            return
+
         print("test_field_coarsening_via_subcycles for dim/interp : {}/{}".format(ndim, interp_order))
 
         from tests.amr.data.field.refine.test_refine_field import refine_time_interpolate
