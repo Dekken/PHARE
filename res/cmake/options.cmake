@@ -107,6 +107,7 @@ function(print_phare_options)
     message("ccache found                                : " ${PHARE_WITH_CCACHE})
     message("PHARE_BASE_LIBS                             : " ${PHARE_BASE_LIBS})
     message("Exclude heavier tests                       : " ${lowResourceTests})
+    message("PHARE_MPI_PROCS                             : " ${PHARE_MPI_PROCS})
   endif()
 
 endfunction(print_phare_options)
