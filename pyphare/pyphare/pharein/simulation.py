@@ -316,6 +316,7 @@ def check_patch_size(ndim, **kwargs):
         grid = GridLayout()
         return max(grid.nbrGhosts(kwargs["interp_order"], x) for x in ['primal','dual'])
 
+    print("ndim", ndim)
     max_ghosts = get_max_ghosts()
     small_invalid_patch_size = phare_utilities.np_array_ify(max_ghosts, ndim)
     largest_patch_size =  kwargs.get("largest_patch_size", None)
@@ -327,6 +328,7 @@ def check_patch_size(ndim, **kwargs):
 
     cells = phare_utilities.np_array_ify(kwargs["cells"])
 
+    print("ndim", ndim)
     if smallest_patch_size.size != ndim:
         raise ValueError(f"Error: smallest_patch_size({smallest_patch_size.size}) must be size {ndim}")
 

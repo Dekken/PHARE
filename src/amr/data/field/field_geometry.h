@@ -1,14 +1,18 @@
 #ifndef PHARE_SRC_AMR_FIELD_FIELD_GEOMETRY_H
 #define PHARE_SRC_AMR_FIELD_FIELD_GEOMETRY_H
 
-#include <SAMRAI/hier/BoxGeometry.h>
+#include "amr/data/field/field_geometry.h"
 
 #include "core/data/grid/gridlayoutdefs.h"
 #include "core/utilities/types.h"
 #include "core/data/grid/gridlayout.h"
 #include "core/data/grid/gridlayout_impl.h"
+
 #include "field_overlap.h"
 
+
+#include <SAMRAI/hier/Box.h>
+#include <SAMRAI/hier/BoxGeometry.h>
 
 
 namespace PHARE::amr
@@ -348,13 +352,13 @@ namespace amr
                    bool const overwriteInterior, SAMRAI::hier::Transformation const& sourceOffset,
                    SAMRAI::hier::BoxContainer const& destinationRestrictBoxes) const
         {
-            SAMRAI::hier::BoxContainer destinationBox;
+            SAMRAI::hier::BoxContainer destinationBoxes;
 
-            destinationGeometry.computeDestinationBoxes_(destinationBox, sourceGeometry, sourceMask,
-                                                         fillBox, overwriteInterior, sourceOffset,
-                                                         destinationRestrictBoxes);
+            destinationGeometry.computeDestinationBoxes_(destinationBoxes, sourceGeometry,
+                                                         sourceMask, fillBox, overwriteInterior,
+                                                         sourceOffset, destinationRestrictBoxes);
 
-            return std::make_shared<FieldOverlap>(destinationBox, sourceOffset);
+            return std::make_shared<FieldOverlap>(destinationBoxes, sourceOffset);
         }
     };
 

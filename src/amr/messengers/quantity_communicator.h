@@ -24,6 +24,7 @@
 #include <optional>
 
 
+#include "core/utilities/types.h"
 
 
 namespace PHARE
@@ -140,7 +141,9 @@ namespace amr
         void add(std::shared_ptr<Schedule> schedule, int levelNumber)
         {
             // for shared border node value sync
-            schedule->setDeterministicUnpackOrderingFlag(true);
+            if (std::optional<std::string> env = core::get_env("DETERMINISTIC");
+                env and *env == "1")
+                schedule->setDeterministicUnpackOrderingFlag(true);
 
             schedules_[levelNumber] = std::move(schedule);
         }

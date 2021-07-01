@@ -7,6 +7,7 @@
 #include "phare_core.h"
 #include "phare_types.h"
 
+#include "core/utilities/types.h"
 #include "core/utilities/mpi_utils.h"
 #include "core/utilities/timestamps.h"
 #include "amr/tagging/tagger_factory.h"
@@ -127,6 +128,9 @@ private:
     }
 
     std::shared_ptr<MultiPhysicsIntegrator> multiphysInteg_{nullptr};
+
+    std::ofstream log_out{".log/" + std::to_string(core::mpi::rank()) + ".out"};
+    std::streambuf* coutbuf;
 };
 
 
@@ -211,6 +215,12 @@ Simulator<_dimension, _interp_order, _nbRefinedPart>::Simulator(
     }
     else
         throw std::runtime_error("unsupported model");
+
+    if (std::optional<std::string> log = core::get_env("PHARE_LOG"); log and *log == "RANK_FILES")
+    {
+        coutbuf = std::cout.rdbuf();
+        std::cout.rdbuf(log_out.rdbuf());
+    }
 }
 
 

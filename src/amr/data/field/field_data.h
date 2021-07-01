@@ -198,6 +198,8 @@ namespace amr
         {
             PHARE_LOG_SCOPE("packStream");
 
+
+
             // getDataStreamSize_<true> mean that we want to apply the transformation
             std::size_t expectedSize = getDataStreamSize_<true>(overlap) / sizeof(double);
             std::vector<typename FieldImpl::type> buffer;
