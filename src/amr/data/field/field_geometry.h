@@ -1,7 +1,7 @@
 #ifndef PHARE_SRC_AMR_FIELD_FIELD_GEOMETRY_H
 #define PHARE_SRC_AMR_FIELD_FIELD_GEOMETRY_H
 
-#include "amr/data/field/field_geometry.h"
+#include <cassert>
 
 #include "core/data/grid/gridlayoutdefs.h"
 #include "core/utilities/types.h"
@@ -9,7 +9,6 @@
 #include "core/data/grid/gridlayout_impl.h"
 
 #include "field_overlap.h"
-
 
 #include <SAMRAI/hier/Box.h>
 #include <SAMRAI/hier/BoxGeometry.h>
@@ -19,14 +18,60 @@ namespace PHARE::amr
 {
 class AFieldGeometry : public SAMRAI::hier::BoxGeometry
 {
+    auto get_unshared_interiorBox(SAMRAI::hier::Box const& box,
+                                  SAMRAI::hier::Box const& interiorBox)
+    {
+        std::cout << __FILE__ << " " << __LINE__ << " " << box << std::endl;
+        std::cout << __FILE__ << " " << __LINE__ << " " << interiorBox << std::endl;
+        std::cout << __FILE__ << " " << __LINE__ << " " << (patchBox.isSpatiallyEqual(interiorBox_))
+                  << std::endl;
+
+        if (patchBox.isSpatiallyEqual(interiorBox_))
+            return interiorBox_;
+
+        using PHARE::core::dirX;
+        using PHARE::core::dirY;
+        using PHARE::core::dirZ;
+
+        std::cout << __FILE__ << " " << __LINE__ << " " << std::endl;
+        auto copy{interiorBox};
+        std::cout << __FILE__ << " " << __LINE__ << " " << dimension << std::endl;
+
+        for (auto dir = dirX; dir < dimension; ++dir)
+        {
+            std::cout << __FILE__ << " " << __LINE__ << " " << dir << std::endl;
+            std::cout << __FILE__ << " " << __LINE__ << " " << interiorBox.upper(dir) << std::endl;
+            std::cout << __FILE__ << " " << __LINE__ << " " << patchBox.upper(dir) << std::endl;
+
+            assert(interiorBox.upper(dir) == patchBox.upper(dir)
+                   or interiorBox.upper(dir) == patchBox.upper(dir) + 1);
+
+            if (interiorBox.upper(dir) == patchBox.upper(dir) + 1)
+            {
+                copy.setLower(dir, copy.lower()(dir) + 1);
+                copy.setUpper(dir, copy.upper()(dir) - 1);
+            }
+        }
+        return copy;
+    }
+
 public:
     virtual ~AFieldGeometry() {}
-    AFieldGeometry(SAMRAI::hier::Box const& box)
-        : patchBox{box}
+    AFieldGeometry(std::size_t dimension_, SAMRAI::hier::Box const& box,
+                   SAMRAI::hier::Box const& ghostBox, SAMRAI::hier::Box const& interiorBox)
+        : dimension{dimension_}
+        , patchBox{box}
+        , ghostBox_{ghostBox}
+        , interiorBox_{interiorBox}
+        , unshared_interiorBox_{get_unshared_interiorBox(box, interiorBox)}
     {
     }
 
+    std::size_t const dimension;
     SAMRAI::hier::Box const patchBox;
+    SAMRAI::hier::Box const ghostBox_;
+    SAMRAI::hier::Box const interiorBox_;
+    SAMRAI::hier::Box const unshared_interiorBox_;
 };
 
 } // namespace PHARE::amr
@@ -49,9 +94,8 @@ namespace amr
          * with a temporary gridlayout
          */
         FieldGeometry(SAMRAI::hier::Box const& box, GridLayoutT layout, PhysicalQuantity qty)
-            : AFieldGeometry{box}
-            , ghostBox_{toFieldBox(box, qty, layout)}
-            , interiorBox_{toFieldBox(box, qty, layout, false)}
+            : AFieldGeometry{GridLayoutT::dimension, box, toFieldBox(box, qty, layout),
+                             toFieldBox(box, qty, layout, false)}
             , layout_{std::move(layout)}
             , quantity_{qty}
         {
@@ -239,8 +283,6 @@ namespace amr
 
 
     private:
-        SAMRAI::hier::Box ghostBox_;
-        SAMRAI::hier::Box interiorBox_;
         GridLayoutT layout_;
         PhysicalQuantity quantity_;
 

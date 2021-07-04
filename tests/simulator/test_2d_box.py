@@ -13,31 +13,25 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.use('Agg')
 
-from pyphare.cpp import cpp_lib
-cpp = cpp_lib()
-diag_outputs="overwrite/interior/false"
-from datetime import datetime
 
 def config():
 
     Simulation(
-        smallest_patch_size=15,
+        smallest_patch_size=10,
         largest_patch_size=25,
-        time_step_nbr=50000,
+        time_step_nbr=1000,
         time_step=0.001,
         #boundary_types="periodic",
         cells=(100,100),
         dl=(0.2, 0.2),
         #refinement="tagging",
         #max_nbr_levels = 3,
-        refinement_boxes={
-            "L0": {"B0": [(20, 20), (29, 29)], "B1": [(20, 30), (29, 39)]},
-            # "L1":{"B0":[(125,),(175,)]}
-        },
+        #refinement_boxes={"L0": {"B0": [(50, ), (150, )]},
+        #                  "L1":{"B0":[(125,),(175,)]}},
         hyper_resistivity=0.001,
         resistivity=0.001,
         diag_options={"format": "phareh5",
-                      "options": {"dir": diag_outputs,
+                      "options": {"dir": ".",
                                   "mode":"overwrite"}},
         strict=True,
     )
@@ -64,7 +58,7 @@ def config():
         w3 = np.exp(-(x0*x0 + y1*y1) / (w2*w2))
         w4 = np.exp(-(x0*x0 + y2*y2) / (w2*w2))
         w5 = 2.0*w1/w2
-        return (w5 * x0 * w3) + ( -w5 * x0 * w4)
+        return 0.# (w5 * x0 * w3) + ( -w5 * x0 * w4)
 
 
     def bx(x, y):
@@ -81,7 +75,7 @@ def config():
         w5 = 2.0*w1/w2
         v1=-1
         v2=1.
-        return v1 + (v2-v1)*(S(y,Ly*0.3,0.5) -S(y, Ly*0.7, 0.5)) + (-w5*y1*w3) + (+w5*y2*w4)
+        return v1 + (v2-v1)*(S(y,Ly*0.3,0.5) -S(y, Ly*0.7, 0.5))# + (-w5*y1*w3) + (+w5*y2*w4)
 
 
     def bz(x, y):
@@ -130,8 +124,7 @@ def config():
 
     MaxwellianFluidModel(
         bx=bx, by=by, bz=bz,
-        protons={"charge": 1, "density": density,  **vvv, "init":{"seed": 12334}},
-
+        protons={"charge": 1, "density": density,  **vvv}
     )
 
     ElectronModel(closure="isothermal", Te=0.0)
@@ -139,7 +132,7 @@ def config():
 
 
     sim = ph.global_vars.sim
-    dt = 100 * sim.time_step
+    dt = 10 * sim.time_step
     nt = sim.final_time/dt+1
     timestamps = (dt * np.arange(nt))
     print(timestamps)
@@ -169,30 +162,47 @@ def config():
 
 
 
+from pyphare.cpp import cpp_lib
+cpp = cpp_lib()
+diag_outputs="."
+from datetime import datetime
 
-def get_time(path, time):
+def get_time(time):
     time = "{:.10f}".format(time)
     from pyphare.pharesee.hierarchy import hierarchy_from
+    now = datetime.now()
     datahier = None
-    datahier = hierarchy_from(h5_filename=path+"/EM_E.h5", time=time, hier=datahier)
-    datahier = hierarchy_from(h5_filename=path+"/EM_B.h5", time=time, hier=datahier)
-    # datahier = hierarchy_from(h5_filename=path+"/ions_pop_protons_domain.h5", time=time, hier=datahier)
-    # datahier = hierarchy_from(h5_filename=path+"/ions_pop_protons_levelGhost.h5", time=time, hier=datahier)
-    # datahier = hierarchy_from(h5_filename=path+"/ions_pop_protons_patchGhost.h5", time=time, hier=datahier)
-    # from pyphare.pharesee.hierarchy import merge_particles
-    # merge_particles(datahier)
+    datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", time=time, hier=datahier)
+    datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", time=time, hier=datahier)
     return datahier
 
 def post_advance(new_time):
+
     if cpp.mpi_rank() == 0:
+
         from tests.simulator.test_advance import AdvanceTestBase
         test = AdvanceTestBase()
+
+        time = "{:.10f}".format(new_time)
+
         print("opening diags")
+        from pyphare.pharesee.hierarchy import hierarchy_from
         now = datetime.now()
-        datahier = get_time(diag_outputs, new_time)
+        datahier = None
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_E.h5", time=time, hier=datahier)
+        datahier = hierarchy_from(h5_filename=diag_outputs+"/EM_B.h5", time=time, hier=datahier)
+
+        # datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_domain.h5", time=time, hier=datahier)
+        # datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_levelGhost.h5", time=time, hier=datahier)
+        # datahier = hierarchy_from(h5_filename=diag_outputs+"/ions_pop_protons_patchGhost.h5", time=time, hier=datahier)
+        # from pyphare.pharesee.hierarchy import merge_particles
+        # merge_particles(datahier)
         print("diags opened in", datetime.now() - now)
+
         test.base_test_overlaped_fields_are_equal(datahier, new_time)
+
         # test.base_test_overlapped_particledatas_have_identical_particles(datahier, new_time)
+
         # n_particles = np.array(cells).prod() * ppc
         # n_particles_at_t = 0
         # for patch in datahier.level(0, new_time).patches:
@@ -201,67 +211,6 @@ def post_advance(new_time):
         # print("coarsest_time", new_time, n_particles_at_t)
 
 
-import numpy as np
-import sys
-import os
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
-import pyphare
-from scipy.ndimage import gaussian_filter as gf
-from pyphare.pharesee.hierarchy import get_times_from_h5
-from pyphare.pharesee.hierarchy import hierarchy_from
-from pyphare.pharesee.geometry import hierarchy_overlaps
-from pyphare.core import box as boxm
-
-def pdata(ip, hier, name):
-    x  = hier.patch_levels[0].patches[ip].patch_datas[name].x[:]
-    y  = hier.patch_levels[0].patches[ip].patch_datas[name].y[:]
-    nx = x.size
-    ny = y.size
-    qty = hier.patch_levels[0].patches[ip].patch_datas[name].dataset[:].reshape((nx,ny))
-    return qty, x, y
-def getData(path, time=None):
-    times = get_times_from_h5(path+"EM_B.h5")
-    times.max()
-    if time is None:
-        time = times.max()
-    B = hierarchy_from(h5_filename = path+"EM_B.h5", time = "{:0.10f}".format(time))
-    E = hierarchy_from(h5_filename = path+"EM_E.h5", time = "{:0.10f}".format(time))
-    Ni= hierarchy_from(h5_filename = path+"ions_density.h5", time = "{:0.10f}".format(time))
-    return B,E,Ni
-def plot2D(hier,time, qty, vmin, vmax, **kwargs):
-    fig,ax = plt.subplots(figsize=(10,5))
-    for ilvl, plvl in hier.levels(time).items():
-        for ip, patch in enumerate(plvl.patches):
-            print("patch info", patch.id, patch.box, patch.box.shape)
-            pdat = patch.patch_datas[qty]
-            nbr_ghost = 5
-            val = pdat.dataset[:]
-            x = pdat.x
-            y = pdat.y
-            nx = x.size
-            ny = y.size
-            val2d = val.reshape((nx,ny))[nbr_ghost:-nbr_ghost, nbr_ghost:-nbr_ghost]
-            x = x[nbr_ghost:-nbr_ghost]
-            y = y[nbr_ghost:-nbr_ghost]
-            dx,dy = pdat.layout.dl
-            im = ax.pcolormesh(x, y, val2d.T, cmap="Spectral_r", vmin=vmin, vmax=vmax)
-            r = Rectangle((patch.layout.box.lower[0]*dx, patch.layout.box.lower[1]*dy),
-                          patch.layout.box.shape[0]*dx, patch.layout.box.shape[1]*dy,
-                         fc="none", ec="k", alpha=0.4, lw=0.8)
-            ax.add_patch(r)
-            ax.text(x.min() + (x.max()-x.min())/5,
-                    y.min() + (y.max()-y.min())/5, f"{patch.id}",
-                   fontsize=10)
-    ax.set_aspect('auto')
-    ax.set_title(f" qty = {qty} t = {time}")
-    fig.colorbar(im, ax=ax)
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    if "filename" in kwargs:
-        fig.savefig(kwargs["filename"])
-
 
 def main():
 
@@ -269,8 +218,6 @@ def main():
     # startMPI()
     s = Simulator(gv.sim, post_advance=post_advance)
     s.initialize()
-    if cpp.mpi_rank() == 0:
-       plot2D(get_time(diag_outputs, 0), 0, "Ez", -1, 1, filename="thing.png")
     post_advance(0)
     s.run()
 
