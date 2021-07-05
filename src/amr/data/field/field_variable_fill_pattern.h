@@ -64,15 +64,14 @@ public:
                 overwrite_interior
                     = src_cast.patchBox.getGlobalId() > dst_cast.patchBox.getGlobalId();
 
-            // auto basic_overlap = dst_geometry.calculateOverlap(src_geometry, src_mask, fill_box,
-            //                                                    overwrite_interior,
-            //                                                    transformation);
-            // auto& overlap      = dynamic_cast<FieldOverlap const&>(*basic_overlap);
+            auto basic_overlap = dst_geometry.calculateOverlap(src_geometry, src_mask, fill_box,
+                                                               overwrite_interior, transformation);
+            auto& overlap      = dynamic_cast<FieldOverlap const&>(*basic_overlap);
 
-            // auto destinationBoxes = overlap.getDestinationBoxContainer();
-            // destinationBoxes.removeIntersections(src_cast.unshared_interiorBox());
+            auto destinationBoxes = overlap.getDestinationBoxContainer();
+            destinationBoxes.removeIntersections(src_cast.unshared_interiorBox());
 
-            // return std::make_shared<FieldOverlap>(destinationBoxes, overlap.getTransformation());
+            return std::make_shared<FieldOverlap>(destinationBoxes, overlap.getTransformation());
         }
 
 
