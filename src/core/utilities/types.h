@@ -212,6 +212,14 @@ namespace core
 
 
 
+    inline std::optional<std::string> get_env(std::string const& key)
+    {
+        if (const char* val = std::getenv(key.c_str()))
+            return std::string{val};
+        return std::nullopt;
+    }
+    inline std::optional<std::string> get_env(std::string&& key) { return get_env(key); }
+
 } // namespace core
 } // namespace PHARE
 

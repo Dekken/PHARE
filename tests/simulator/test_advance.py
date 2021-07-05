@@ -37,7 +37,7 @@ class AdvanceTestBase(unittest.TestCase):
                      diag_outputs, nbr_part_per_cell=100, density = _density,
                      smallest_patch_size=None, largest_patch_size=20,
                      cells=120, time_step=0.001, model_init={},
-                     dl=0.1, extra_diag_options={}, time_step_nbr=1, timestamps=None, ndim=1):
+                     dl=0.2, extra_diag_options={}, time_step_nbr=1, timestamps=None, ndim=1):
         diag_outputs = f"phare_outputs/advance/{diag_outputs}"
         from pyphare.pharein import global_vars
         global_vars.sim = None
@@ -122,7 +122,8 @@ class AdvanceTestBase(unittest.TestCase):
                                       "vbulkx": vx, "vbulky": vy, "vbulkz": vz,
                                       "vthx": vthx, "vthy": vthy, "vthz": vthz,
                                       "nbr_part_per_cell": nbr_part_per_cell,
-                                      "init": model_init})
+                                      "init": model_init,
+                                      })
 
         ElectronModel(closure="isothermal", Te=0)#0.12)
 
@@ -221,8 +222,8 @@ class AdvanceTestBase(unittest.TestCase):
                     loc_b1 = boxm.amr_to_local(box, boxm.shift(pd1.ghost_box, offsets[0]))
                     loc_b2 = boxm.amr_to_local(box, boxm.shift(pd2.ghost_box, offsets[1]))
 
-                    data1 = pd1.dataset[:].reshape(pd1.ghost_box.shape + pd1.primal_directions())
-                    data2 = pd2.dataset[:].reshape(pd2.ghost_box.shape + pd2.primal_directions())
+                    data1 = pd1.dataset
+                    data2 = pd2.dataset
 
                     if box.ndim == 1:
                         slice1 = data1[loc_b1.lower[0]:loc_b1.upper[0] + 1]
@@ -233,12 +234,20 @@ class AdvanceTestBase(unittest.TestCase):
                         slice2 = data2[loc_b2.lower[0]:loc_b2.upper[0] + 1, loc_b2.lower[1]:loc_b2.upper[1] + 1]
 
                     try:
-                        # np.testing.assert_equal(slice1, slice2)
-                        np.testing.assert_allclose(slice1, slice2, atol=1e-15, rtol=0)
+                        assert slice1.dtype == np.float64
+                        np.testing.assert_equal(slice1, slice2)
+                        # np.testing.assert_allclose(slice1, slice2, atol=1e-16)
+                        # np.testing.assert_allclose(slice1, slice2, atol=1e-16, rtol=0)
                         checks += 1
                     except AssertionError as e:
                         print("error", coarsest_time, overlap, e)
-                        raise e
+                        print("shape", slice1.shape)
+                        where = np.where(np.abs(slice1 - slice2) > 0)
+                        print("where", where)
+                        print("what 1", slice1[where])
+                        print("what 2", slice2[where])
+                        print("really?", slice1[where] == slice2[where])
+                        # raise e
         return checks
 
 
