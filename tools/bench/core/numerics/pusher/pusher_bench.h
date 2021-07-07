@@ -6,6 +6,19 @@
 
 namespace PHARE::core::bench
 {
+void set_env(char** envp)
+{
+    const std::string find = "PHARE_THREADS=";
+    for (char** environ = envp; *environ != 0; environ++)
+        if (std::string env(*environ); env.find(find) != std::string::npos)
+        {
+            std::stringstream sstream(env.substr(find.size()));
+            sstream >> nThreads;
+        }
+    std::cout << __FILE__ << " " << __LINE__ << " WITH PHARE_THREADS=" << nThreads << std::endl;
+}
+
+
 template<std::size_t dim>
 using Field = PHARE::core::Field<PHARE::core::NdArrayVector<dim>,
                                  typename PHARE::core::HybridQuantity::Scalar>;

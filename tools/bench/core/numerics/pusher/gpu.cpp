@@ -1,11 +1,41 @@
 
-#include "benchmark/benchmark.h"
-#include "core/numerics/pusher/pavlov.h"
+#include <algorithm>
+
+#include "kul/gpu.hpp"
+#include "kul/gpu/asio.hpp"
+
+
 #include "pusher_bench.h"
 
-using namespace PHARE::core::bench;
+static constexpr std::uint32_t GIGS = 4;
 
-static std::size_t nThreads = 1;
+template<typename Type>
+auto alloc_type_around_size_gb(std::size_t gigabytes)
+{
+}
+
+static constexpr std::uint32_t BATCHES  = 4;
+static constexpr std::uint32_t NUM      = 1024 * 1024 * BATCHES;
+static constexpr std::uint32_t TP_BLOCK = 256;
+
+struct gpu_Patch
+{
+};
+
+template<typename Particle>
+struct gpu_Particle
+{
+    Particle particle;
+    bool is_in_box = false;
+};
+
+
+template<typename Particle>
+__global__ void push_particle(Particle* particle, int offset)
+{
+    auto i  = kul::gpu::asio::idx() + offset;
+    a[i].f0 = a[i].f0 + 1;
+}
 
 template<std::size_t dim, std::size_t interp>
 void push(benchmark::State& state)
@@ -21,10 +51,10 @@ void push(benchmark::State& state)
     using GridLayout_t      = typename PHARE_Types::GridLayout_t;
     using ParticleArray     = typename Ions_t::particle_array_type;
     using PartIterator      = typename ParticleArray::iterator;
-    using ThreadPool        = ::EXT::ThreadPool;
 
-    using Pusher_t = PHARE::core::PavlovPusher<dim, PartIterator, Electromag_t, Interpolator,
-                                               BoundaryCondition, GridLayout_t, ThreadPool>;
+
+    using PetrovPusher_t = PHARE::core::PetrovPusher<dim, PartIterator, Electromag_t, Interpolator,
+                                                     BoundaryCondition, GridLayout_t>;
 
     Interpolator interpolator;
     ParticleArray domainParticles{parts, particle<dim>(/*icell =*/34)};
@@ -38,12 +68,13 @@ void push(benchmark::State& state)
 
     PHARE::core::bench::Electromag<GridLayout_t, VecField<dim>> electromag{layout};
 
-    Pusher_t pusher{nThreads};
+    PetrovPusher_t pusher;
     pusher.setMeshAndTimeStep(layout.meshSize(), .001);
 
     while (state.KeepRunning())
     {
         pusher.move(
+            /*ParticleRange const&*/ range,
             /*ParticleRange&*/ range,
             /*Electromag const&*/ electromag,
             /*double mass*/ 1,
@@ -53,23 +84,27 @@ void push(benchmark::State& state)
     }
 }
 
-BENCHMARK_TEMPLATE(push, /*dim=*/1, /*interp=*/1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(push, /*dim=*/1, /*interp=*/2)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(push, /*dim=*/1, /*interp=*/3)->Unit(benchmark::kMicrosecond);
-
-BENCHMARK_TEMPLATE(push, /*dim=*/2, /*interp=*/1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(push, /*dim=*/2, /*interp=*/2)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(push, /*dim=*/2, /*interp=*/3)->Unit(benchmark::kMicrosecond);
-
-BENCHMARK_TEMPLATE(push, /*dim=*/3, /*interp=*/1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(push, /*dim=*/3, /*interp=*/2)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(push, /*dim=*/3, /*interp=*/3)->Unit(benchmark::kMicrosecond);
-
+std::uint32_t test_single()
+{
+    kul::gpu::HostArray<A, NUM> a;
+    for (std::uint32_t i = 0; i < NUM; ++i)
+        a[i].f0 = i;
+    kul::gpu::asio::Batch batch{BATCHES, a};
+    kul::gpu::asio::Launcher{TP_BLOCK}(single, batch).async_back();
+    for (std::size_t i = 0; i < batch.streams.size(); ++i)
+    {
+        auto offset    = i * batch.streamSize;
+        auto copy_back = batch[i];
+        for (std::uint32_t j = 0; j < batch.streamSize; ++j)
+            if (copy_back[j].f0 != a[j + offset].f0 + 1)
+                return 1;
+    }
+    return 0;
+}
 
 
 int main(int argc, char** argv, char** envp)
 {
-    PHARE::core::bench::set_env(envp);
     ::benchmark::Initialize(&argc, argv);
     ::benchmark::RunSpecifiedBenchmarks();
 }

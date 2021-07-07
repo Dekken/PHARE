@@ -512,7 +512,7 @@ namespace core
     /** \brief Interpolator is used to perform particle-mesh interpolations using
      * 1st, 2nd or 3rd order interpolation in 1D, 2D or 3D, on a given layout.
      */
-    template<std::size_t dim, std::size_t interpOrder>
+    template<std::size_t dim, std::size_t interpOrder, bool atomic = false>
     class Interpolator : private Weighter<interpOrder>
     {
     public:
