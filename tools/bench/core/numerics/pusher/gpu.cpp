@@ -6,8 +6,12 @@
 
 
 #include "pusher_bench.h"
+#include "benchmark/benchmark.h"
+
+#include "tests/gpu/gpu.hpp"
 
 static constexpr std::uint32_t GIGS = 4;
+using namespace PHARE::core::bench;
 
 template<typename Type>
 auto alloc_type_around_size_gb(std::size_t gigabytes)
@@ -18,23 +22,12 @@ static constexpr std::uint32_t BATCHES  = 4;
 static constexpr std::uint32_t NUM      = 1024 * 1024 * BATCHES;
 static constexpr std::uint32_t TP_BLOCK = 256;
 
-struct gpu_Patch
-{
-};
-
-template<typename Particle>
-struct gpu_Particle
-{
-    Particle particle;
-    bool is_in_box = false;
-};
-
 
 template<typename Particle>
 __global__ void push_particle(Particle* particle, int offset)
 {
-    auto i  = kul::gpu::asio::idx() + offset;
-    a[i].f0 = a[i].f0 + 1;
+    auto i = kul::gpu::asio::idx() + offset;
+    // a[i].f0 = a[i].f0 + 1;
 }
 
 template<std::size_t dim, std::size_t interp>
@@ -83,7 +76,7 @@ void push(benchmark::State& state)
             /*GridLayout const&*/ layout);
     }
 }
-
+/*
 std::uint32_t test_single()
 {
     kul::gpu::HostArray<A, NUM> a;
@@ -100,8 +93,19 @@ std::uint32_t test_single()
                 return 1;
     }
     return 0;
-}
+}*/
 
+// BENCHMARK_TEMPLATE(push, /*dim=*/1, /*interp=*/1)->Unit(benchmark::kMicrosecond);
+// BENCHMARK_TEMPLATE(push, /*dim=*/1, /*interp=*/2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(push, /*dim=*/1, /*interp=*/3)->Unit(benchmark::kMicrosecond);
+
+// BENCHMARK_TEMPLATE(push, /*dim=*/2, /*interp=*/1)->Unit(benchmark::kMicrosecond);
+// BENCHMARK_TEMPLATE(push, /*dim=*/2, /*interp=*/2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(push, /*dim=*/2, /*interp=*/3)->Unit(benchmark::kMicrosecond);
+
+// BENCHMARK_TEMPLATE(push, /*dim=*/3, /*interp=*/1)->Unit(benchmark::kMicrosecond);
+// BENCHMARK_TEMPLATE(push, /*dim=*/3, /*interp=*/2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(push, /*dim=*/3, /*interp=*/3)->Unit(benchmark::kMicrosecond);
 
 int main(int argc, char** argv, char** envp)
 {

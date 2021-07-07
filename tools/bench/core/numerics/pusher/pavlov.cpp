@@ -7,6 +7,18 @@ using namespace PHARE::core::bench;
 
 static std::size_t nThreads = 1;
 
+void set_env(char** envp)
+{
+    const std::string find = "PHARE_THREADS=";
+    for (char** environ = envp; *environ != 0; environ++)
+        if (std::string env(*environ); env.find(find) != std::string::npos)
+        {
+            std::stringstream sstream(env.substr(find.size()));
+            sstream >> nThreads;
+        }
+    std::cout << __FILE__ << " " << __LINE__ << " WITH PHARE_THREADS=" << nThreads << std::endl;
+}
+
 template<std::size_t dim, std::size_t interp>
 void push(benchmark::State& state)
 {
@@ -69,7 +81,7 @@ BENCHMARK_TEMPLATE(push, /*dim=*/3, /*interp=*/3)->Unit(benchmark::kMicrosecond)
 
 int main(int argc, char** argv, char** envp)
 {
-    PHARE::core::bench::set_env(envp);
+    set_env(envp);
     ::benchmark::Initialize(&argc, argv);
     ::benchmark::RunSpecifiedBenchmarks();
 }
