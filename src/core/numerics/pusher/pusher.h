@@ -78,9 +78,10 @@ namespace core
          * @brief setMeshAndTimeStep allows to let the pusher know what is the mesh
          * size and time step in the domain where particles are to be pushed.
          */
-        virtual void setMeshAndTimeStep(std::array<double, dim> ms, double ts) = 0;
+        virtual void setMeshAndTimeStep(std::array<double, dim> ms, double ts) _PHARE_FN_SIG_ = 0;
 
-        virtual ~Pusher() {}
+        Pusher() _PHARE_FN_SIG_ {}
+        virtual ~Pusher() _PHARE_FN_SIG_ {}
     };
 
 } // namespace core

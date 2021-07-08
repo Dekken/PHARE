@@ -19,13 +19,12 @@ class NoOverwriteDict(dict):
 def basicSimulatorArgs(dim: int, interp: int, **kwargs):
     from pyphare.pharein.simulation import valid_refined_particle_nbr
     from pyphare.pharein.simulation import check_patch_size
+    from pyphare.core.phare_utilities import np_array_ify
 
-    cells = kwargs.get("cells", [20 for i in range(dim)])
-    if not isinstance(cells, (list, tuple)):
-        cells = [cells] * dim
+    cells = np_array_ify(kwargs.get("cells", [20 for i in range(dim)]), dim)
 
     _, smallest_patch_size = check_patch_size(dim, interp_order=interp, cells=cells)
-    dl = [1.0 / v for v in cells]
+    dl = 1.0 / cells
     b0 = [[3] * dim, [8] * dim]
     args = {
         "interp_order": interp,
@@ -45,7 +44,7 @@ def basicSimulatorArgs(dim: int, interp: int, **kwargs):
     for k, v in kwargs.items():
         if k in args:
             args[k] = v
-
+    print("args", args)
     return args
 
 def meshify(*xyz):

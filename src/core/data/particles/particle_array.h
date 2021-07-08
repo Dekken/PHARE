@@ -62,6 +62,9 @@ public:
         particles.insert(position, first, last);
     }
 
+    auto data() { return particles.data(); }
+    auto data() const { return particles.data(); }
+
     auto back() { return particles.back(); }
     auto front() { return particles.front(); }
 

@@ -3,9 +3,9 @@
 name: phare
 
 property:
-  MPI_INC: /usr/include/hdf5/mpich #/usr/include/hdf5/openmpi #/usr/local/netcdf/include
+  MPI_INC: /usr/include # /usr/include/hdf5/mpich #/usr/include/hdf5/openmpi #/usr/local/netcdf/include
   MPI_LIB: hdf5
-  MPI_PTH: /usr/lib/x86_64-linux-gnu/hdf5/mpich
+  MPI_PTH: /usr/lib64/openmpi/lib # /usr/lib64 #/usr/lib/x86_64-linux-gnu/hdf5/mpich
 
 profile:
 - name: base
@@ -86,7 +86,7 @@ profile:
   test:
     tests/diagnostic/test-diagnostics_1d.cpp
     tests/diagnostic/test-diagnostics_2d.cpp
-  env: PYTHONPATH=${MKN_ROOT}:${MKN_ROOT}/tests/diagnostic:${MKN_ROOT}/build:${MKN_ROOT}/pyphare
+  env: PYTHONPATH=${MKN_ROOT}:${MKN_ROOT}/build/tests/diagnostic:${MKN_ROOT}/build:${MKN_ROOT}/pyphare
 
 - name: bench
   self: core
@@ -100,7 +100,8 @@ profile:
   inc: .
   dep: mkn.gpu
   main: tools/bench/core/numerics/pusher/gpu.cpp
-  arg: -DPHARE_WITH_HIP -DKUL_GPU_ROCM
+  arg: -DPHARE_WITH_GPU -DKUL_GPU_CUDA
+  env: PYTHONPATH=${MKN_ROOT}:${MKN_ROOT}/tools/bench/core/numerics/pusher:${MKN_ROOT}/build:${MKN_ROOT}/pyphare
 
 - name: c_depositor
   test: tools/hw/gpu/bench/depositor.cpp

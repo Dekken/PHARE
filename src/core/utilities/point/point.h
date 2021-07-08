@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "core/utilities/meta/meta_utilities.h"
+#include "core/def.h"
 
 namespace PHARE
 {
@@ -64,9 +65,9 @@ namespace core
 
         constexpr Point() { core::fill(Type{0}, r); }
 
-        type& operator[](std::size_t i) { return r[i]; }
+        type& operator[](std::size_t i) _PHARE_FN_SIG_ { return r[i]; }
 
-        type const& operator[](std::size_t i) const { return r[i]; }
+        type const& operator[](std::size_t i) const _PHARE_FN_SIG_ { return r[i]; }
 
 
         bool operator==(Point const& p) const

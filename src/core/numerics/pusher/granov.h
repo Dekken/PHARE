@@ -1,5 +1,5 @@
-#ifndef PHARE_CORE_PUSHER_KIROV_H
-#define PHARE_CORE_PUSHER_KIROV_H
+#ifndef PHARE_CORE_PUSHER_GRANOV_H
+#define PHARE_CORE_PUSHER_GRANOV_H
 
 
 #include "core/ThreadPool.h"
@@ -10,15 +10,17 @@
 #include <cstddef>
 #include <iostream>
 
+
 #include "core/numerics/pusher/pusher.h"
 #include "core/utilities/range/range.h"
 #include "core/logger.h"
+#include "core/def.h"
 
 namespace PHARE::core
 {
 template<std::size_t dim, typename ParticleIterator, typename Electromag, typename Interpolator,
          typename BoundaryCondition, typename GridLayout, typename ThreadPool_t = EXT::ThreadPool>
-class KirovPusher
+class GranovPusher
     : public Pusher<dim, ParticleIterator, Electromag, Interpolator, BoundaryCondition, GridLayout>
 {
 public:
@@ -27,11 +29,8 @@ public:
     using ParticleSelector = typename Super::ParticleSelector;
     using ParticleRange    = Range<ParticleIterator>;
 
-    KirovPusher(std::size_t threads = 1)
-        : pool_{threads - 1}
-    {
-        assert(threads > 0);
-    }
+    GranovPusher() _PHARE_FN_SIG_ {}
+    ~GranovPusher() _PHARE_FN_SIG_ {}
 
     /** see Pusher::move() documentation*/
     ParticleIterator move(ParticleRange const& rangeIn, ParticleRange& rangeOut,
@@ -39,37 +38,6 @@ public:
                           ParticleSelector const& particleIsNotLeaving, BoundaryCondition& bc,
                           GridLayout const& layout) override
     {
-        // push the particles of half a step
-        // rangeIn : t=n, rangeOut : t=n+1/Z
-        // get a pointer on the first particle of rangeOut that leaves the patch
-        auto firstLeaving = pushStep_(rangeIn, rangeOut, particleIsNotLeaving, PushStep::PrePush);
-
-        // apply boundary condition on the particles in [firstLeaving, rangeOut.end[
-        // that actually leave through a physical boundary condition
-        // get a pointer on the new end of rangeOut. Particles passed newEnd
-        // are those that have left the patch through a non-physical boundary
-        // they should be discarded now
-        auto newEnd = bc.applyOutgoingParticleBC(firstLeaving, rangeOut.end());
-
-        rangeOut = makeRange(rangeOut.begin(), std::move(newEnd));
-
-        // get electromagnetic fields interpolated on the particles of rangeOut
-        // stop at newEnd.
-        interpolator(rangeOut.begin(), rangeOut.end(), emFields, layout);
-
-        // get the particle velocity from t=n to t=n+1
-        accelerate_(rangeOut, rangeOut, mass);
-
-        // now advance the particles from t=n+1/2 to t=n+1 using v_{n+1} just calculated
-        // and get a pointer to the first leaving particle
-        firstLeaving = pushStep_(rangeOut, rangeOut, particleIsNotLeaving, PushStep::PostPush);
-
-        // apply BC on the leaving particles that leave through physical BC
-        // and get pointer on new End, discarding particles leaving elsewhere
-        newEnd = bc.applyOutgoingParticleBC(firstLeaving, rangeOut.end());
-
-        rangeOut = makeRange(rangeOut.begin(), std::move(newEnd));
-
         return rangeOut.end();
     }
 
@@ -80,49 +48,24 @@ public:
                           ParticleSelector const& particleIsNotLeaving,
                           GridLayout const& layout) override
     {
-        PHARE_LOG_SCOPE("Kirov::move_no_bc");
-
-        // push the particles of half a step
-        // rangeIn : t=n, rangeOut : t=n+1/2
-        // get a pointer on the first particle of rangeOut that leaves the patch
-        auto firstLeaving = pushStep_(rangeIn, rangeOut, particleIsNotLeaving, PushStep::PrePush);
-
-        rangeOut = makeRange(rangeOut.begin(), std::move(firstLeaving));
-
-        // get electromagnetic fields interpolated on the particles of rangeOut
-        // stop at newEnd.
-        interpolator(rangeOut.begin(), rangeOut.end(), emFields, layout);
-
-        // get the particle velocity from t=n to t=n+1
-        accelerate_(rangeOut, rangeOut, mass);
-
-        // now advance the particles from t=n+1/2 to t=n+1 using v_{n+1} just calculated
-        // and get a pointer to the first leaving particle
-        firstLeaving = pushStep_(rangeOut, rangeOut, particleIsNotLeaving, PushStep::PostPush);
-
-        rangeOut = makeRange(rangeOut.begin(), std::move(firstLeaving));
-
         return rangeOut.end();
     }
 
 
-    template<typename Particle_t>
+    template<typename Particle_t, typename Selector>
     bool move_in_place(Particle_t& particle, Electromag const& emFields, Interpolator& interpolator,
-                       ParticleSelector const& particleIsNotLeaving, GridLayout const& layout)
+                       Selector const& particleIsNotLeaving,
+                       GridLayout const& layout) _PHARE_FN_SIG_
     {
         advancePosition_(particle);
 
-        if (particleIsNotLeaving(particle))
-        {
-            interpolator.meshToParticle(particle, emFields, layout);
+        interpolator.meshToParticle(particle, emFields, layout);
 
-            accelerate_(particle);
+        accelerate_(particle);
 
-            advancePosition_(particle);
+        advancePosition_(particle);
 
-            return particleIsNotLeaving(particle);
-        }
-        return false;
+        return particleIsNotLeaving(particle);
     }
 
 
@@ -131,36 +74,7 @@ public:
                           Interpolator& interpolator, ParticleSelector const& particleIsNotLeaving,
                           GridLayout const& layout) override
     {
-        PHARE_LOG_SCOPE("Kirov::move_in_place_no_bc");
-
-        accelerate_setup(mass);
-
-        std::vector<bool> particlesAreNotLeaving(range.size(), false);
-
-        auto _move = [&](std::size_t const from, std::size_t const to) {
-            for (std::size_t i = from; i < to; ++i)
-                particlesAreNotLeaving[i]
-                    = move_in_place(range[i], emFields, interpolator, particleIsNotLeaving, layout);
-        };
-
-        std::size_t perThread = range.size() / (pool_.size() + 1);
-        for (std::size_t i = 0; i < pool_.size(); ++i)
-            pool_.enqueue([&, ix = i]() {
-                auto from = ix * perThread;
-                auto to   = from + perThread;
-                _move(from, to);
-            });
-
-        _move(pool_.size() * perThread, range.size()); // should start at 0 for cache?
-
-        pool_.sync();
-
-        auto firstLeaving
-            = std::partition(std::begin(range), std::end(range), [&](auto const& part) {
-                  return particlesAreNotLeaving[&part - &(*range.begin())];
-              });
-
-        return makeRange(range.begin(), std::move(firstLeaving)).end();
+        return range.end();
     }
 
 
@@ -169,12 +83,15 @@ public:
     /** see Pusher::move() documentation*/
     virtual void setMeshAndTimeStep(std::array<double, dim> ms, double ts) override _PHARE_FN_SIG_
     {
-        std::transform(std::begin(ms), std::end(ms), std::begin(halfDtOverDl_),
-                       [ts](double const& x) { return 0.5 * ts / x; });
+        // std::transform(std::begin(ms), std::end(ms), std::begin(halfDtOverDl_),
+        //                [ts](double const& x) { return 0.5 * ts / x; });
+        for (std::uint8_t i; i < dim; ++i)
+            halfDtOverDl_[i] = 0.5 * ts / ms[i];
         dt_ = ts;
     }
 
 
+    void accelerate_setup(double mass) _PHARE_FN_SIG_ { dto2m_ = 0.5 * dt_ / mass; }
 
 private:
     enum class PushStep { PrePush, PostPush };
@@ -182,13 +99,13 @@ private:
     /** move the particle partIn of half a time step and store it in partOut
      */
     template<typename ParticleIter>
-    void advancePosition_(ParticleIter& particle)
+    void advancePosition_(ParticleIter& particle) _PHARE_FN_SIG_
     {
         advancePosition_(particle, particle);
     }
 
     template<typename ParticleIter>
-    void advancePosition_(ParticleIter const& partIn, ParticleIter& partOut)
+    void advancePosition_(ParticleIter const& partIn, ParticleIter& partOut) _PHARE_FN_SIG_
     {
         // push the particle
         for (std::size_t iDim = 0; iDim < dim; ++iDim)
@@ -199,7 +116,8 @@ private:
             float iCell = std::floor(delta);
             if (std::abs(delta) > 2)
             {
-                throw std::runtime_error("Error, particle moves more than 1 cell, delta >2");
+                return;
+                // throw std::runtime_error("Error, particle moves more than 1 cell, delta >2");
             }
             partOut.delta[iDim] = delta - iCell;
             partOut.iCell[iDim] = static_cast<int>(iCell + partIn.iCell[iDim]);
@@ -214,13 +132,20 @@ private:
      * detected by the ParticleSelector
      */
     template<typename ParticleRangeIn, typename ParticleRangeOut>
-    auto pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut,
-                   ParticleSelector const& particleIsNotLeaving, PushStep step)
+    void pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut, PushStep step)
     {
         auto currentOut = rangeOut.begin();
-
         for (auto& currentIn : rangeIn)
         {
+            // in the first push, this is the first time
+            // we push to rangeOut, which contains crap
+            // the push will only touch the particle position
+            // but the next step being the acceleration of
+            // rangeOut, we need to copy rangeIn weights, charge
+            // and velocity. This is done here although
+            // not strictly speaking this function's business
+            // to take advantage that we're already looping
+            // over rangeIn particles.
             if (step == PushStep::PrePush)
             {
                 currentOut->charge = currentIn.charge;
@@ -231,6 +156,13 @@ private:
             advancePosition_(currentIn, *currentOut);
             currentOut++;
         }
+    }
+
+    template<typename ParticleRangeIn, typename ParticleRangeOut>
+    auto pushStep_(ParticleRangeIn const& rangeIn, ParticleRangeOut& rangeOut,
+                   ParticleSelector const& particleIsNotLeaving, PushStep step)
+    {
+        pushStep_(rangeIn, rangeOut, step);
 
         // now all particles have been pushed
         // those not satisfying the predicate after the push
@@ -241,7 +173,6 @@ private:
 
 
 
-    void accelerate_setup(double mass) { dto2m_ = 0.5 * dt_ / mass; }
 
     template<typename ParticleRangeIn, typename ParticleRangeOut>
     void accelerate_(ParticleRangeIn inputParticles, ParticleRangeOut outputParticles, double mass)
@@ -261,13 +192,13 @@ private:
     /** Accelerate the particles in rangeIn and put the new velocity in rangeOut
      */
     template<typename Particle_t>
-    void accelerate_(Particle_t& particle)
+    void accelerate_(Particle_t& particle) _PHARE_FN_SIG_
     {
         accelerate_(particle, particle);
     }
 
     template<typename Particle_t>
-    void accelerate_(Particle_t const& currentIn, Particle_t& currentOut)
+    void accelerate_(Particle_t const& currentIn, Particle_t& currentOut) _PHARE_FN_SIG_
     {
         double coef1 = currentIn.charge * dto2m_;
 
@@ -325,7 +256,6 @@ private:
     double dt_;
 
     double dto2m_; // not thread safe, cannot // multiple pops at the same time
-    ThreadPool_t pool_;
 };
 
 } // namespace PHARE::core

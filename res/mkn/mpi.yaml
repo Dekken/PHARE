@@ -1,8 +1,8 @@
 
 
-local:
-  repo: /mkn/r
-  mod-repo: /mkn/m
+# local:
+#   repo: /mkn/r
+#   mod-repo: /mkn/m
 
 remote:
   repo: git@github.com:mkn/
@@ -14,6 +14,9 @@ compiler:
       mpicc
       mpicxx
 
+# env: |
+#   OMPI_CXX=clang++
+
 file:
   - type: c:S
     archiver: ar -cr
@@ -21,6 +24,6 @@ file:
     linker: gcc
   - type: cpp:cxx:cc
     archiver: ar -cr
-    compiler: ccache mpicxx -cxx=g++ -std=c++17 -fPIC
-    linker: g++ #-fuse-ld=gold -Wl,--threads -Wl,--thread-count=10
+    compiler: ccache mpicxx -std=c++17 -fPIC
+    linker: mpicxx #-fuse-ld=gold -Wl,--threads -Wl,--thread-count=10
 

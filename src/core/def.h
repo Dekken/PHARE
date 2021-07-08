@@ -1,18 +1,42 @@
 #ifndef PHARE_CORE_DEF_H
 #define PHARE_CORE_DEF_H
 
+#include <stdexcept>
 
-#if defined(PHARE_WITH_HIP)
+#if defined(PHARE_WITH_GPU)
 
-#define PHARE_GPU_DEVICE __device__
-#define PHARE_GPU_HST __host__
-#define _PHARE_FN_DECORATORS_ PHARE_GPU_HST PHARE_GPU_DEVICE
+#define _PHARE_GPU_FN_DEV_ __device__
+#define _PHARE_GPU_FN_HST_ __host__
+#define _PHARE_FN_SIG_ _PHARE_GPU_FN_HST_ _PHARE_GPU_FN_DEV_
+
+
+namespace PHARE
+{
+void throw_runtime_error(char* err) _PHARE_GPU_FN_DEV_
+{
+    // gpu cannot throw
+}
+
+void throw_runtime_error(char* err) _PHARE_GPU_FN_HST_
+{
+    throw std::runtime_error(err);
+}
+} // namespace PHARE
 
 #else
 
-#define PHARE_GPU_DEVICE
-#define PHARE_GPU_HST
-#define _PHARE_FN_DECORATORS_
+#define _PHARE_GPU_FN_DEV_
+#define _PHARE_GPU_FN_HST_
+#define _PHARE_FN_SIG_
+
+namespace PHARE
+{
+void throw_runtime_error(char* err)
+{
+    throw std::runtime_error(err);
+}
+} // namespace PHARE
+
 
 #endif
 

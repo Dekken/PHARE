@@ -1,5 +1,5 @@
 
-#define PHARE_WITH_HIP
+#define PHARE_WITH_GPU
 
 #include "gpu.hpp"
 

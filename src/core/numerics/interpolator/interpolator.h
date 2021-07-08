@@ -11,6 +11,7 @@
 #include "core/utilities/point/point.h"
 
 #include "core/logger.h"
+#include "core/def.h"
 
 namespace PHARE
 {
@@ -26,7 +27,7 @@ namespace core
 
     //! return the number of points on which to interpolate at order InterpOrder
     template<std::size_t interpOrder>
-    int computeStartIndex(double normalizedPos)
+    int computeStartIndex(double normalizedPos) _PHARE_FN_SIG_
     {
         return static_cast<int>(normalizedPos - (static_cast<double>(interpOrder) - 1.) / 2.);
     }
@@ -67,7 +68,7 @@ namespace core
     {
     public:
         inline void computeWeight(double normalizedPos, int startIndex,
-                                  std::array<double, nbrPointsSupport(1)>& weights)
+                                  std::array<double, nbrPointsSupport(1)>& weights) _PHARE_FN_SIG_
         {
             weights[1] = normalizedPos - static_cast<double>(startIndex);
             weights[0] = 1. - weights[1];
@@ -84,7 +85,7 @@ namespace core
     {
     public:
         inline void computeWeight(double normalizedPos, int startIndex,
-                                  std::array<double, nbrPointsSupport(2)>& weights)
+                                  std::array<double, nbrPointsSupport(2)>& weights) _PHARE_FN_SIG_
         {
             auto index = startIndex + 1;
             auto delta = static_cast<double>(index) - normalizedPos;
@@ -110,7 +111,7 @@ namespace core
     {
     public:
         inline void computeWeight(double normalizedPos, int startIndex,
-                                  std::array<double, nbrPointsSupport(3)>& weights)
+                                  std::array<double, nbrPointsSupport(3)>& weights) _PHARE_FN_SIG_
         {
             double coef1, coef2, coef3, coef4;
             auto index = static_cast<double>(startIndex) - normalizedPos;
@@ -160,7 +161,7 @@ namespace core
         template<typename Field, typename Array1, typename Array2>
         inline double operator()(Field const& field,
                                  std::array<QtyCentering, 1> const& fieldCentering,
-                                 Array1 const& startIndex, Array2 const& weights)
+                                 Array1 const& startIndex, Array2 const& weights) _PHARE_FN_SIG_
         {
             auto fieldAtParticle    = 0.;
             auto const& xStartIndex = startIndex[static_cast<int>(fieldCentering[0])][0];
@@ -193,7 +194,7 @@ namespace core
         template<typename Field, typename Array1, typename Array2>
         inline double operator()(Field const& field,
                                  std::array<QtyCentering, 2> const& fieldCentering,
-                                 Array1 const& startIndex, Array2 const& weights)
+                                 Array1 const& startIndex, Array2 const& weights) _PHARE_FN_SIG_
         {
             auto const& xStartIndex = startIndex[static_cast<int>(fieldCentering[0])][0];
             auto const& yStartIndex = startIndex[static_cast<int>(fieldCentering[1])][1];
@@ -234,7 +235,7 @@ namespace core
         template<typename Field, typename Array1, typename Array2>
         inline double operator()(Field const& field,
                                  std::array<QtyCentering, 3> const& fieldCentering,
-                                 Array1 const& startIndex, Array2 const& weights)
+                                 Array1 const& startIndex, Array2 const& weights) _PHARE_FN_SIG_
         {
             auto const& xStartIndex = startIndex[static_cast<std::size_t>(fieldCentering[0])][0];
             auto const& yStartIndex = startIndex[static_cast<std::size_t>(fieldCentering[1])][1];
@@ -526,7 +527,7 @@ namespace core
          * in 'startIndex' and 'weights'. For dual fields, the normalizedPosition
          * is offseted compared to primal ones.*/
         template<typename Particle_t, typename GridLayout>
-        auto indexAndWeight(Particle_t const& part, GridLayout const& layout)
+        auto indexAndWeight(Particle_t const& part, GridLayout const& layout) _PHARE_FN_SIG_
         {
             IndexAndWeight indexAndWeight;
             auto& [startIndex_, weights_] = indexAndWeight;
@@ -568,7 +569,8 @@ namespace core
          * onto the particle.
          */
         template<typename Particle_t, typename Electromag, typename GridLayout>
-        void meshToParticle(Particle_t& particle, Electromag const& Em, GridLayout const& layout)
+        void meshToParticle(Particle_t& particle, Electromag const& Em,
+                            GridLayout const& layout) _PHARE_FN_SIG_
         {
             auto constexpr ExCentering = GridLayout::centering(HybridQuantity::Scalar::Ex);
             auto constexpr EyCentering = GridLayout::centering(HybridQuantity::Scalar::Ey);

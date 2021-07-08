@@ -76,19 +76,18 @@ namespace core
         template<bool refs = Refs, std::enable_if_t<!refs, bool> = 0>
         GridLayoutDAO(std::array<Float, dim> const& meshSize, Point<Float, dim> const& origin,
                       std::array<std::uint32_t, dim> const& nbrCells,
-                      Box<std::int32_t, dim> AMRBox) _PHARE_FN_DECORATORS_
-            : meshSize_{meshSize},
-              origin_{origin},
-              nbrPhysicalCells_{nbrCells},
-              physicalStartIndexTable_{},
-              physicalEndIndexTable_{},
-              ghostEndIndexTable_{},
-              AMRBox_{AMRBox}
+                      Box<std::int32_t, dim> AMRBox) _PHARE_FN_SIG_ : meshSize_{meshSize},
+                                                                      origin_{origin},
+                                                                      nbrPhysicalCells_{nbrCells},
+                                                                      physicalStartIndexTable_{},
+                                                                      physicalEndIndexTable_{},
+                                                                      ghostEndIndexTable_{},
+                                                                      AMRBox_{AMRBox}
         {
         }
 
         template<bool refs = Refs, std::enable_if_t<refs, bool> = 0>
-        GridLayoutDAO(GridLayoutDAO<GridLayoutImpl, false> const& dao) _PHARE_FN_DECORATORS_
+        GridLayoutDAO(GridLayoutDAO<GridLayoutImpl, false> const& dao) _PHARE_FN_SIG_
             : meshSize_{dao.meshSize_},
               origin_{dao.origin_},
               nbrPhysicalCells_{dao.nbrPhysicalCells_},
@@ -108,7 +107,7 @@ namespace core
                       Table const& _physicalStartIndexTable,          //
                       Table const& _physicalEndIndexTable,            //
                       Table const& _ghostEndIndexTable,               //
-                      Box<std::int32_t, dim> const& AMRBox) _PHARE_FN_DECORATORS_
+                      Box<std::int32_t, dim> const& AMRBox) _PHARE_FN_SIG_
             : meshSize_{meshSize},
               origin_{origin},
               nbrPhysicalCells_{nbrCells},
@@ -120,12 +119,9 @@ namespace core
         {
         }
 
-        auto physicalStartIndexTable() const _PHARE_FN_DECORATORS_
-        {
-            return physicalStartIndexTable_;
-        }
-        auto physicalEndIndexTable() const _PHARE_FN_DECORATORS_ { return physicalEndIndexTable_; }
-        auto ghostEndIndexTable() const _PHARE_FN_DECORATORS_ { return ghostEndIndexTable_; }
+        auto physicalStartIndexTable() const _PHARE_FN_SIG_ { return physicalStartIndexTable_; }
+        auto physicalEndIndexTable() const _PHARE_FN_SIG_ { return physicalEndIndexTable_; }
+        auto ghostEndIndexTable() const _PHARE_FN_SIG_ { return ghostEndIndexTable_; }
 
     protected:
         static constexpr bool is_ref = Refs;
@@ -180,7 +176,7 @@ namespace core
                    std::array<std::uint32_t, dimension> const& nbrPhysicalCells,
                    Point<Float, dimension> const& origin,
                    Box<std::int32_t, dimension> _AMRBox
-                   = Box<std::int32_t, dimension>{}) _PHARE_FN_DECORATORS_
+                   = Box<std::int32_t, dimension>{}) _PHARE_FN_SIG_
             : DAO{meshSize, origin, nbrPhysicalCells, _AMRBox}
         {
             validate(_AMRBox);
@@ -192,7 +188,7 @@ namespace core
         }
 
         template<bool refs = is_ref, std::enable_if_t<refs, bool> = 0>
-        GridLayout(DAO&& dao) _PHARE_FN_DECORATORS_ : DAO{dao}
+        GridLayout(DAO&& dao) _PHARE_FN_SIG_ : DAO{dao}
         {
         }
 
@@ -234,7 +230,10 @@ namespace core
         /**
          * @brief returns the mesh size in the 'dim' dimensions
          */
-        std::array<Float, dimension> const& meshSize() const noexcept { return meshSize_; }
+        std::array<Float, dimension> const& meshSize() const noexcept _PHARE_FN_SIG_
+        {
+            return meshSize_;
+        }
 
 
 
@@ -367,7 +366,8 @@ namespace core
          * @brief physicalStartIndex returns the index of the first node of a given
          * centering and in a given direction that is in the physical domain, i.e. not a ghost node.
          */
-        std::uint32_t physicalStartIndex(QtyCentering centering, Direction direction) const
+        std::uint32_t physicalStartIndex(QtyCentering centering,
+                                         Direction direction) const _PHARE_FN_SIG_
         {
             std::uint32_t icentering = static_cast<std::uint32_t>(centering);
             std::uint32_t iDir       = static_cast<std::uint32_t>(direction);
@@ -861,7 +861,7 @@ namespace core
          * This method only deals with **cell** indexes.
          */
         template<typename T>
-        auto AMRToLocal(Point<T, dimension> AMRPoint) const
+        auto AMRToLocal(Point<T, dimension> AMRPoint) const _PHARE_FN_SIG_
         {
             static_assert(std::is_integral_v<T>, "Error, must be MeshIndex (integral Point)");
             Point<T, dimension> localPoint;

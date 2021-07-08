@@ -13,7 +13,7 @@ namespace PHARE::gpu
 template<typename SimOpts>
 struct PatchState
 {
-    using Float      = typename SimOpts::Float;
+    using Float      = double;
     using GridLayout = typename SimOpts::GridLayout_t;
 
     template<typename State>
@@ -34,7 +34,7 @@ struct PatchState
 
     typename GridLayout::Super gridLayoutDAO;
     std::vector<kul::Span<Float const, std::uint32_t>> electromag;
-    std::vector<core::ParticleArray</*Float,*/ SimOpts::dimension>*> ions;
+    std::vector<core::ParticleArray</*Float,*/ SimOpts::dimension> const*> ions;
 };
 
 template<std::uint8_t dim, bool GPU>
@@ -80,6 +80,7 @@ struct FieldInterop
     FieldInterop() __device__ = default;
 
     auto& __device__ operator()(std::uint32_t i) { return ptrs[i]; }
+    auto& __device__ operator()(std::uint32_t i) const { return ptrs[i]; }
     // auto operator()(std::uint32_t, std::uint32_t) { return 2; }
     // auto operator()(std::uint32_t, std::uint32_t, std::uint32_t) { return 3; }
 
@@ -113,6 +114,9 @@ struct VecFieldInterop
         return z;
     }
 
+    auto __device__ getComponents() { return std::forward_as_tuple(x, y, z); }
+    auto __device__ getComponents() const { return std::forward_as_tuple(x, y, z); }
+
     FieldInterop<Float> x, y, z;
 };
 
@@ -135,7 +139,7 @@ struct Electromags : kul::gpu::DeviceClass<GPU>
 {
     using Super = kul::gpu::DeviceClass<GPU>;
     using gpu_t = Electromags<SimOpts, true>;
-    using Float = typename SimOpts::Float;
+    using Float = double;
 
     template<typename T>
     using container_t = typename Super::template container_t<T>;
@@ -218,9 +222,9 @@ struct GridLayouts : kul::gpu::DeviceClass<GPU>
     static constexpr std::uint8_t dim  = SimOpts::dimension;
     static constexpr std::uint8_t dim2 = dim * 2;
 
+    using Float = double;
     using Super = kul::gpu::DeviceClass<GPU>;
     using gpu_t = GridLayouts<SimOpts, true>;
-    using Float = typename SimOpts::Float;
 
     using GridLayoutImpl = typename SimOpts::YeeLayout_t;
     using GridLayoutDAO  = PHARE::core::GridLayoutDAO<GridLayoutImpl, /*Refs=*/true>;
@@ -318,7 +322,7 @@ struct PatchStatePerParticle : kul::gpu::DeviceClass<GPU>
 {
     using Super = kul::gpu::DeviceClass<GPU>;
     using gpu_t = PatchStatePerParticle<SimOpts, true>;
-    using Float = typename SimOpts::Float;
+    using Float = double;
 
     template<typename T>
     using container_t = typename Super::template container_t<T>;
@@ -366,7 +370,7 @@ struct ParticlePatchState
 {
     static constexpr bool GPU         = false;
     static constexpr std::uint8_t dim = 1;
-    using Float                       = typename SimOpts::Float;
+    using Float                       = double;
     using GridLayout                  = typename GridLayouts<SimOpts, GPU>::GridLayout;
     using GridLayouts_                = GridLayouts<SimOpts, GPU>;
     using Electromags_                = Electromags<SimOpts, GPU>;
@@ -406,51 +410,51 @@ struct ParticlePatchState
 };
 
 
-static constexpr size_t X = 1024, Y = 1024, Z = 1;         // 40;
-static constexpr size_t TPB_X = 16, TPB_Y = 16, TPB_Z = 1; // 4;
-static constexpr size_t MAX_PARTICLES = X * Y * Z;
+// static constexpr size_t X = 1024, Y = 1024, Z = 1;         // 40;
+// static constexpr size_t TPB_X = 16, TPB_Y = 16, TPB_Z = 1; // 4;
+// static constexpr size_t MAX_PARTICLES = X * Y * Z;
 
-template<typename PHARE_TYPES>
-__global__ void gpu_particles_in(PHARE::gpu::PatchStatePerParticle<PHARE_TYPES, true>* ppsp)
-{
-    auto i = kul::gpu::idx();
-    if (i >= ppsp->n_particles())
-        return;
-    auto patchStateIDX         = (*ppsp)[i];
-    auto gridLayout            = ppsp->gridLayouts->gridLayout(patchStateIDX);
-    auto electromag            = ppsp->electromags->electromag(patchStateIDX);
-    ppsp->particles->charge[i] = electromag.E.getComponent(PHARE::core::Component::X)(0);
-}
+// template<typename PHARE_TYPES>
+// __global__ void gpu_particles_in(PHARE::gpu::PatchStatePerParticle<PHARE_TYPES, true>* ppsp)
+// {
+//     auto i = kul::gpu::idx();
+//     if (i >= ppsp->n_particles())
+//         return;
+//     auto patchStateIDX         = (*ppsp)[i];
+//     auto gridLayout            = ppsp->gridLayouts->gridLayout(patchStateIDX);
+//     auto electromag            = ppsp->electromags->electromag(patchStateIDX);
+//     ppsp->particles->charge[i] = electromag.E.getComponent(PHARE::core::Component::X)(0);
+// }
 
-template<typename Float, std::size_t dim = 1, std::size_t interp = 1, std::size_t nbRefineParts = 2>
-void do_thing(std::string job_id)
-{
-    using PHARE_TYPES = PHARE::PHARE_Types<dim, interp, nbRefineParts /*, Float*/>;
-    SimulatorTestParam<dim, interp, nbRefineParts /*, Float*/> sim{job_id};
-    auto& hierarchy   = *sim.hierarchy;
-    auto& hybridModel = *sim.getHybridModel();
-    auto& state       = hybridModel.state;
-    auto topLvl       = hierarchy.getNumberOfLevels() - 1;
+// template<typename Float, std::size_t dim = 1, std::size_t interp = 1, std::size_t nbRefineParts =
+// 2> void do_thing(std::string job_id)
+// {
+//     using PHARE_TYPES = PHARE::PHARE_Types<dim, interp, nbRefineParts /*, Float*/>;
+//     SimulatorTestParam<dim, interp, nbRefineParts /*, Float*/> sim{job_id};
+//     auto& hierarchy   = *sim.hierarchy;
+//     auto& hybridModel = *sim.getHybridModel();
+//     auto& state       = hybridModel.state;
+//     auto topLvl       = hierarchy.getNumberOfLevels() - 1;
 
-    std::vector<PHARE::gpu::PatchState<PHARE_TYPES>> states;
-    PHARE::amr::visitHierarchy<typename PHARE_TYPES::GridLayout_t>(
-        hierarchy, *hybridModel.resourcesManager,
-        [&](auto& gridLayout, std::string, size_t) { states.emplace_back(gridLayout, state); },
-        topLvl, topLvl + 1, hybridModel);
+//     std::vector<PHARE::gpu::PatchState<PHARE_TYPES>> states;
+//     PHARE::amr::visitHierarchy<typename PHARE_TYPES::GridLayout_t>(
+//         hierarchy, *hybridModel.resourcesManager,
+//         [&](auto& gridLayout, std::string, size_t) { states.emplace_back(gridLayout, state); },
+//         topLvl, topLvl + 1, hybridModel);
 
-    PHARE::gpu::ParticlePatchState<PHARE_TYPES> packer{states};
-    kul::gpu::Launcher{X, Y, Z, TPB_X, TPB_Y, TPB_Z}(gpu_particles_in<PHARE_TYPES>, packer());
+//     PHARE::gpu::ParticlePatchState<PHARE_TYPES> packer{states};
+//     kul::gpu::Launcher{X, Y, Z, TPB_X, TPB_Y, TPB_Z}(gpu_particles_in<PHARE_TYPES>, packer());
 
-    KLOG(NON) << "MAX_PARTICLES: " << MAX_PARTICLES;
-    KLOG(NON) << "GPU PARTICLES: " << packer.n_particles;
+//     KLOG(INF) << "MAX_PARTICLES: " << MAX_PARTICLES;
+//     KLOG(INF) << "GPU PARTICLES: " << packer.n_particles;
 
-    for (auto const& state : states)
-        KLOG(NON) << state.electromag[0][1];
+//     for (auto const& state : states)
+//         KLOG(INF) << state.electromag[0][1];
 
-    auto charge = packer.particles->charge();
-    KLOG(NON) << charge[0];
-    KLOG(NON) << charge.back();
-}
+//     auto charge = packer.particles->charge();
+//     KLOG(INF) << charge[0];
+//     KLOG(INF) << charge.back();
+// }
 
 } // namespace PHARE::gpu
 
