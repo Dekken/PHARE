@@ -3,9 +3,9 @@
 name: phare
 
 property:
-  MPI_INC: /usr/include # /usr/include/hdf5/mpich #/usr/include/hdf5/openmpi #/usr/local/netcdf/include
+  MPI_INC: /usr/include/hdf5/mpich #/usr/include/hdf5/openmpi #/usr/local/netcdf/include
   MPI_LIB: hdf5
-  MPI_PTH: /usr/lib64/openmpi/lib # /usr/lib64 #/usr/lib/x86_64-linux-gnu/hdf5/mpich
+  MPI_PTH: /usr/lib/x86_64-linux-gnu/hdf5/mpich # /usr/lib64/openmpi/lib #
 
 profile:
 - name: base
@@ -35,6 +35,7 @@ profile:
   parent: base
   src: src/simulator
   self: diagnostic
+  out: phare_simulator
 
 - name: exe
   self: simulator init
@@ -99,8 +100,19 @@ profile:
   self: bench
   inc: .
   dep: mkn.gpu
+  arg: -DPHARE_WITH_GPU
+  env: PYTHONPATH=${MKN_ROOT}:${MKN_ROOT}/tools/bench/core/numerics/pusher:${MKN_ROOT}/build:${MKN_ROOT}/pyphare
+
+- name: rocm_pusher
+  parent: gpu_pusher
   main: tools/bench/core/numerics/pusher/gpu.cpp
-  arg: -DPHARE_WITH_GPU -DKUL_GPU_CUDA
+  arg: -DKUL_GPU_ROCM
+  env: PYTHONPATH=${MKN_ROOT}:${MKN_ROOT}/tools/bench/core/numerics/pusher:${MKN_ROOT}/build:${MKN_ROOT}/pyphare
+
+- name: cuda_pusher
+  parent: gpu_pusher
+  main: tools/bench/core/numerics/pusher/gpu.cpp
+  arg: -DKUL_GPU_CUDA
   env: PYTHONPATH=${MKN_ROOT}:${MKN_ROOT}/tools/bench/core/numerics/pusher:${MKN_ROOT}/build:${MKN_ROOT}/pyphare
 
 - name: c_depositor

@@ -18,7 +18,7 @@ struct PatchState
 
     template<typename State>
     PatchState(GridLayout const& gridLayout, State const& state)
-        : gridLayoutDAO{gridLayout}
+        : layout{gridLayout}
     {
         for (auto const& pop : state.ions)
             ions.emplace_back(&pop.domainParticles());
@@ -32,7 +32,7 @@ struct PatchState
         vecF(state.electromag.B);
     }
 
-    typename GridLayout::Super gridLayoutDAO;
+    GridLayout const layout;
     std::vector<kul::Span<Float const, std::uint32_t>> electromag;
     std::vector<core::ParticleArray</*Float,*/ SimOpts::dimension> const*> ions;
 };
@@ -58,7 +58,6 @@ struct Particles : kul::gpu::DeviceClass<GPU>
     {
         auto size = array.size();
         particles.send(array.data(), size, i);
-
         return i + size;
     }
 
@@ -66,6 +65,13 @@ struct Particles : kul::gpu::DeviceClass<GPU>
     auto operator()()
     {
         return Super::template alloc<gpu_t>(particles);
+    }
+
+
+    template<bool gpu = GPU, std::enable_if_t<gpu, bool> = 0>
+    auto __device__ operator[](std::size_t idx) const
+    {
+        return particles[idx];
     }
 
     container_t<core::Particle<dim>> particles;
@@ -150,8 +156,8 @@ struct Electromags : kul::gpu::DeviceClass<GPU>
         std::uint32_t n_states = static_cast<std::uint32_t>(states.size());
 
         std::vector<std::uint32_t> emXYZ(6, 0), emInfo(n_states * 6);
-        for (std::size_t j = 0; j < n_states; j++)
-            for (std::size_t i = 0; i < states[j].electromag.size(); i++)
+        for (std::size_t j = 0; j < n_states; ++j)
+            for (std::size_t i = 0; i < states[j].electromag.size(); ++i)
             {
                 auto pos    = (j * 6) + i;
                 emInfo[pos] = emXYZ[i];
@@ -172,7 +178,7 @@ struct Electromags : kul::gpu::DeviceClass<GPU>
         , Bz{v[5]}
         , info{_info}
     {
-        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(states.size()); i++)
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(states.size()); ++i)
         {
             auto pos = i * 6;
             auto& em = states[i].electromag;
@@ -227,8 +233,7 @@ struct GridLayouts : kul::gpu::DeviceClass<GPU>
     using gpu_t = GridLayouts<SimOpts, true>;
 
     using GridLayoutImpl = typename SimOpts::YeeLayout_t;
-    using GridLayoutDAO  = PHARE::core::GridLayoutDAO<GridLayoutImpl, /*Refs=*/true>;
-    using GridLayout     = PHARE::core::GridLayout<GridLayoutImpl, GridLayoutDAO>;
+    using GridLayout     = PHARE::core::GridLayout<GridLayoutImpl>;
 
     template<bool gpu = GPU, std::enable_if_t<!gpu, bool> = 0>
     static auto make_shared(std::vector<PatchState<SimOpts>> const& states)
@@ -239,81 +244,25 @@ struct GridLayouts : kul::gpu::DeviceClass<GPU>
 
     template<bool gpu = GPU, std::enable_if_t<!gpu, bool> = 0>
     GridLayouts(std::vector<PatchState<SimOpts>> const& states, std::uint32_t n_states)
-        : meshSize{n_states * dim}
-        , origin{n_states * dim}
-        , inverseMeshSize{n_states * dim}
-        , nbrPhysicalCells{n_states * dim}
-        , physicalStartIndices{n_states * dim * 2}
-        , physicalEndIndices{n_states * dim * 2}
-        , ghostEndIndices{n_states * dim * 2}
-        , AMRBox{n_states * dim * 2}
+        : layouts{n_states}
     {
-        for (std::uint32_t curr_part = 0, i = 0; i < n_states; i++)
-        {
-            GridLayout gridLayout{GridLayoutDAO{states[i].gridLayoutDAO}};
-            this->add(gridLayout, i);
-        }
-    }
-
-    template<bool gpu = GPU, std::enable_if_t<!gpu, bool> = 0>
-    void add(GridLayout const& gridLayout, std::uint32_t i)
-    {
-        std::uint32_t start = i * dim, start2 = i * dim2;
-
-        meshSize.send(gridLayout.meshSize().data(), dim, start);
-        origin.send(&gridLayout.origin()[0], dim, start);
-        inverseMeshSize.send(gridLayout.inverseMeshSize().data(), dim, start);
-        nbrPhysicalCells.send(gridLayout.nbrCells().data(), dim, start);
-        physicalStartIndices.send(&gridLayout.physicalStartIndexTable()[0][0], dim2, start2);
-        physicalEndIndices.send(&gridLayout.physicalEndIndexTable()[0][0], dim2, start2);
-        ghostEndIndices.send(&gridLayout.ghostEndIndexTable()[0][0], dim2, start2);
-        AMRBox.send(reinterpret_cast<std::int32_t const* const>(&gridLayout.AMRBox()), dim2,
-                    start2);
+        for (std::uint32_t i = 0; i < n_states; ++i)
+            layouts.send(&states[i].layout, 1, i);
     }
 
     template<bool gpu = GPU, std::enable_if_t<!gpu, bool> = 0>
     auto operator()()
     {
-        return Super::template alloc<gpu_t>(meshSize, origin, inverseMeshSize, nbrPhysicalCells,
-                                            physicalStartIndices, physicalEndIndices,
-                                            ghostEndIndices, AMRBox);
-    }
-
-    template<typename T>
-    static auto __device__ array_cast(T* array)
-    {
-        return reinterpret_cast<std::array<T, dim>*>(array);
-    }
-
-    template<typename A, typename T>
-    static auto __device__ array_cast(T* array)
-    {
-        return reinterpret_cast<A*>(array);
+        return Super::template alloc<gpu_t>(layouts);
     }
 
     template<bool gpu = GPU, std::enable_if_t<gpu, bool> = 0>
-    GridLayout __device__ gridLayout(std::uint16_t i = 0)
+    auto __device__ operator[](std::size_t idx) const
     {
-        constexpr std::uint32_t dim2 = dim * 2;
-        std::uint32_t start = i * dim, start2 = i * dim2;
-        return GridLayout{GridLayoutDAO{
-            *array_cast(&meshSize[start]),
-            *reinterpret_cast<core::Point<Float, dim>*>(array_cast(&origin[start])),
-            *array_cast(&nbrPhysicalCells[start]), *array_cast(&inverseMeshSize[start]),
-            *array_cast<std::array<std::array<std::uint32_t, dim>, 2>>(
-                &physicalStartIndices[start2]),
-            *array_cast<std::array<std::array<std::uint32_t, dim>, 2>>(&physicalEndIndices[start2]),
-            *array_cast<std::array<std::array<std::uint32_t, dim>, 2>>(&ghostEndIndices[start2]),
-            *reinterpret_cast<core::Box<std::int32_t, dim>*>(array_cast(&AMRBox[start2]))}};
+        return layouts[idx];
     }
 
-    template<typename T>
-    using container_t = typename Super::template container_t<T>;
-
-    container_t<Float> meshSize, origin, inverseMeshSize;
-    container_t<std::uint32_t> nbrPhysicalCells;
-    container_t<std::uint32_t> physicalStartIndices, physicalEndIndices, ghostEndIndices;
-    container_t<std::int32_t> AMRBox; // <- upper+lower = dim * 2
+    typename Super::template container_t<GridLayout> layouts;
 };
 
 

@@ -12,12 +12,12 @@
 
 namespace PHARE
 {
-void throw_runtime_error(char* err) _PHARE_GPU_FN_DEV_
+inline void throw_runtime_error(char* err) _PHARE_GPU_FN_DEV_
 {
     // gpu cannot throw
 }
 
-void throw_runtime_error(char* err) _PHARE_GPU_FN_HST_
+inline void throw_runtime_error(char* err) _PHARE_GPU_FN_HST_
 {
     throw std::runtime_error(err);
 }
@@ -31,7 +31,7 @@ void throw_runtime_error(char* err) _PHARE_GPU_FN_HST_
 
 namespace PHARE
 {
-void throw_runtime_error(char* err)
+inline void throw_runtime_error(char* err)
 {
     throw std::runtime_error(err);
 }

@@ -79,7 +79,7 @@ public:
 
     void swap(ParticleArray<dim>& that) { std::swap(this->particles, that.particles); }
 
-private:
+    // private:
     Vector particles;
 };
 

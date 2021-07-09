@@ -15,14 +15,14 @@ using VecField
 
 
 template<std::size_t dim>
-PHARE::core::Particle<dim> particle(int icell = 5)
+PHARE::core::Particle<dim> particle(int icell = 15)
 {
     return {//
             /*.weight = */ 0,
             /*.charge = */ 1,
             /*.iCell  = */ PHARE::core::ConstArray<int, dim>(icell),
             /*.delta  = */ PHARE::core::ConstArray<double, dim>(.5),
-            /*.v      = */ {{0, 10., 0}}};
+            /*.v      = */ {{.1, .2, .3}}};
 }
 
 template<typename ParticleArray>

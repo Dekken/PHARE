@@ -81,12 +81,14 @@ public:
 
 
     /** see Pusher::move() documentation*/
-    virtual void setMeshAndTimeStep(std::array<double, dim> ms, double ts) override _PHARE_FN_SIG_
+    virtual void setMeshAndTimeStep(std::array<double, dim> const& ms,
+                                    double ts) override _PHARE_FN_SIG_
     {
         // std::transform(std::begin(ms), std::end(ms), std::begin(halfDtOverDl_),
         //                [ts](double const& x) { return 0.5 * ts / x; });
-        for (std::uint8_t i; i < dim; ++i)
+        for (std::size_t i = 0; i < dim; ++i)
             halfDtOverDl_[i] = 0.5 * ts / ms[i];
+        // halfDtOverDl_ = ms;
         dt_ = ts;
     }
 
@@ -104,26 +106,21 @@ private:
         advancePosition_(particle, particle);
     }
 
-    template<typename ParticleIter>
-    void advancePosition_(ParticleIter const& partIn, ParticleIter& partOut) _PHARE_FN_SIG_
+    template<typename Particle>
+    void advancePosition_(Particle const& partIn, Particle& partOut) _PHARE_FN_SIG_
     {
         // push the particle
         for (std::size_t iDim = 0; iDim < dim; ++iDim)
         {
-            float delta
-                = partIn.delta[iDim] + static_cast<float>(halfDtOverDl_[iDim] * partIn.v[iDim]);
+            double delta = partIn.delta[iDim] + (halfDtOverDl_[iDim] * partIn.v[iDim]);
 
-            float iCell = std::floor(delta);
-            if (std::abs(delta) > 2)
-            {
-                return;
-                // throw std::runtime_error("Error, particle moves more than 1 cell, delta >2");
-            }
+            double iCell = std::floor(delta);
+            assert(!(std::abs(delta) > 2)); //
+
             partOut.delta[iDim] = delta - iCell;
             partOut.iCell[iDim] = static_cast<int>(iCell + partIn.iCell[iDim]);
         }
     }
-
 
 
     /** advance the particles in rangeIn of half a time step and store them
@@ -252,10 +249,10 @@ private:
 
 
 
-    std::array<double, dim> halfDtOverDl_;
-    double dt_;
+    std::array<double, dim> halfDtOverDl_{PHARE::core::ConstArray<double, dim>(1)};
+    double dt_ = 1;
 
-    double dto2m_; // not thread safe, cannot // multiple pops at the same time
+    double dto2m_ = 1; // not thread safe, cannot // multiple pops at the same time
 };
 
 } // namespace PHARE::core

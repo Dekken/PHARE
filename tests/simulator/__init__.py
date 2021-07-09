@@ -93,19 +93,19 @@ def defaultPopulationSettings(sim, density_fn, vbulk_fn):
     }
 
 
-def makeBasicModel(extra_pops={}):
+def makeBasicModel(ppc=100, extra_pops={}):
     sim = ph.global_vars.sim
     _density_fn_periodic = globals()["density_"+str(sim.ndim)+"d_periodic"]
 
     pops = {
         "protons": {
             **defaultPopulationSettings(sim, _density_fn_periodic, fn_periodic),
-            "nbr_part_per_cell": 100,
+            "nbr_part_per_cell": ppc,
             "init": {"seed": 1337},
         },
         "alpha": {
             **defaultPopulationSettings(sim, _density_fn_periodic, fn_periodic),
-            "nbr_part_per_cell": 100,
+            "nbr_part_per_cell": ppc,
             "init": {"seed": 13337},
         },
     }
